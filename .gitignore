@@ -1,0 +1,6 @@
+.DS_Store
+.claude/
+video/build/*
+!video/build/timeline.js
+!video/build/timeline.json
+!video/build/narration-timed.json

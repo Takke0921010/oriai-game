@@ -1,0 +1,730 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<title>折り合い v2.0</title>
+<style>
+:root{font-family:system-ui,-apple-system,'Hiragino Kaku Gothic ProN','Yu Gothic',sans-serif;color:#233b39;background:#f2f1e9;font-size:15px;
+  --green:#254d47;--accent:#ac672b;--purple:#775b98;--paper:#fffdf7;--line:#d8ded2;--pro:#2f7d5b;--mid:#c09a3a;--con:#b0503a}
+*{box-sizing:border-box}
+body{margin:0;background:#f2f1e9}
+button,input,select,textarea{font:inherit}
+button{cursor:pointer;border:1px solid #7c9791;border-radius:8px;background:#fff;color:inherit;padding:10px 16px}
+button:hover:not(:disabled){background:#e1efe8}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+button:disabled{cursor:default;opacity:.4}
+button.primary{background:var(--green);color:#fff;border-color:var(--green);font-weight:700}
+button.primary:hover:not(:disabled){background:#1b3a35}
+button.small{padding:5px 10px;font-size:13px}
+h1,h2,h3,p{margin:0 0 .6em}
+h1{font-size:28px}h2{font-size:21px}h3{font-size:16px;margin-top:14px}
+small{font-size:12px;line-height:1.5}
+a{color:#245f73}
+header{display:flex;justify-content:space-between;gap:16px;align-items:center;padding:14px 24px;background:var(--green);color:#fff;flex-wrap:wrap}
+header h1{margin:0;font-size:22px}
+header .phase-tag{background:#fff2;padding:4px 12px;border-radius:20px;font-size:13px}
+header.p2{background:#4b3a63}
+main{padding:20px;max-width:1400px;margin:auto}
+.card-box{background:#fff;border-radius:12px;padding:28px;max-width:900px;margin:30px auto;border:1px solid #ccd5cb}
+.card-box p{line-height:1.9}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.status{min-height:24px;color:#25674a;margin:8px 0}
+.flow{display:flex;gap:4px;margin:0 0 14px;flex-wrap:wrap}
+.flow span{padding:8px 12px;background:#e2e5de;flex:1;text-align:center;font-size:13px;min-width:90px}
+.flow .active{background:var(--green);color:#fff;font-weight:700}
+.flow.p2 .active{background:#4b3a63}
+.flow .done{background:#c9d8cf}
+.board{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;align-items:start}
+@media (max-width:900px){.board{grid-template-columns:1fr}}
+.region{background:var(--paper);border:2px solid var(--line);border-radius:12px;padding:14px;min-width:0}
+.region.current{border-color:#2f705d;box-shadow:0 0 0 3px #2f705d33}
+.region h2{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.region h2 small{font-weight:400;color:#5f6f69}
+.region .story{font-size:13px;color:#4c5d58;line-height:1.6}
+.stat{display:flex;gap:10px;flex-wrap:wrap;font-size:13px;margin:6px 0}
+.stat span{background:#eef1ea;padding:3px 8px;border-radius:5px}
+.storage{display:flex;flex-wrap:wrap;gap:3px;margin:6px 0 2px;padding:6px;background:#f4ebda;border-radius:6px;border-left:5px solid #a16831}
+.cell{width:22px;height:22px;border:1px solid #b6ad98;background:#fbf8f1;border-radius:3px}
+.cell.filled{border-color:#6e5a3c}
+.label{font-size:12px;color:#5d6b66;margin-top:8px}
+.yard{display:flex;flex-direction:column;gap:6px;margin-top:4px}
+.soilcard{display:flex;gap:8px;align-items:center;border:1px solid #c7b9a0;border-left:6px solid var(--c);background:#fff;padding:6px 8px;border-radius:6px;flex-wrap:wrap}
+.soilcard b{min-width:52px}
+.soilcard .dots{letter-spacing:2px;color:#7a5a33}
+.soilcard .new{font-size:11px;background:#ffe1b8;padding:1px 6px;border-radius:4px}
+.soilcard .acts{display:flex;gap:4px;flex-wrap:wrap;margin-left:auto}
+.empty{font-size:12px;color:#7d8a85}
+.panel{background:#fff;border:1px solid #ccd5cb;border-radius:12px;padding:16px 18px;margin-bottom:14px}
+.event{border-left:6px solid var(--layer,#3c7868);padding:14px 16px;background:#f7f5ee;margin:10px 0;border-radius:6px}
+.event .date{font-size:12px;color:#5d6b66}
+.event .effect{font-weight:700;color:#1e4d41;margin-top:6px}
+.event .hist{font-size:13px;color:#4c4560;background:#efeaf5;padding:8px 10px;border-radius:6px;margin-top:8px;line-height:1.7}
+.log{font-size:12px;max-height:160px;overflow:auto;background:#fafaf6;border:1px solid #e3e6dd;padding:8px;border-radius:6px;line-height:1.7}
+.overlay{position:fixed;inset:0;background:#142b37b0;z-index:20;display:flex;align-items:center;justify-content:center;padding:16px}
+.modal{background:var(--paper);border-radius:14px;padding:26px;max-width:720px;width:100%;max-height:92vh;overflow:auto;box-shadow:0 10px 50px #0005}
+.modal p{line-height:1.8}
+.residents{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+.person{width:44px;text-align:center;font-size:11px;line-height:1.2}
+.person .head{width:22px;height:22px;border-radius:50%;margin:0 auto 2px;background:var(--pc)}
+.person .body{width:36px;height:18px;border-radius:18px 18px 4px 4px;margin:0 auto;background:var(--pc)}
+.person.moved .head,.person.moved .body{animation:pulse 1s 2}
+@keyframes pulse{50%{transform:scale(1.25)}}
+.legend{display:flex;gap:12px;font-size:12px;flex-wrap:wrap}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:50%;vertical-align:-1px;margin-right:4px}
+.dice{display:inline-flex;width:64px;height:64px;border:3px solid #333;border-radius:12px;background:#fff;align-items:center;justify-content:center;font-size:34px;font-weight:700}
+.dice.rolling{animation:shake .12s infinite}
+@keyframes shake{25%{transform:rotate(8deg)}75%{transform:rotate(-8deg)}}
+.voice{font-size:16px;font-weight:700;margin:8px 0;padding:10px 14px;border-radius:8px;background:#f3f1e9;border-left:6px solid var(--vc)}
+.mods{font-size:13px;margin:6px 0;padding-left:18px}
+.mods li{margin:2px 0}
+.tier{display:inline-block;padding:2px 10px;border-radius:20px;color:#fff;font-size:13px;font-weight:700}
+.reveal-big{font-size:26px;font-weight:800;line-height:1.5;color:#3d2a55}
+.map{width:100%;max-width:640px;display:block;margin:10px auto}
+.fade{animation:fade .8s both}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.cover{background:#2c2440;color:#fff;border-radius:14px;padding:40px;text-align:center}
+.cover h2{font-size:26px}
+.choice-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0}
+.choice{padding:22px;font-size:20px;font-weight:800;border-width:2px}
+.choice.sel{outline:4px solid var(--accent);background:#fff0d8}
+textarea{width:100%;min-height:70px;padding:8px;border:1px solid #9dafaa;border-radius:6px}
+input,select{padding:7px;border:1px solid #9dafaa;border-radius:5px}
+.timeline{list-style:none;padding:0;margin:0;border-left:4px solid var(--purple)}
+.timeline li{padding:6px 0 10px 16px;position:relative;line-height:1.7}
+.timeline li::before{content:'';position:absolute;left:-10px;top:12px;width:14px;height:14px;border-radius:50%;background:#fff;border:3px solid var(--purple)}
+.timeline b{display:inline-block;min-width:96px;color:#4b3a63}
+.slide{min-height:420px}
+.slide-nav{display:flex;justify-content:space-between;align-items:center;margin-top:16px;gap:10px;flex-wrap:wrap}
+.quote{border-left:5px solid #7d6aa0;background:#f2eef7;padding:12px 16px;margin:10px 0;line-height:1.85;border-radius:4px}
+.src{font-size:12px;color:#5d6b66}
+.tagline{display:inline-block;background:#efeaf5;color:#4b3a63;padding:2px 10px;border-radius:12px;font-size:12px;margin-right:6px}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{border-bottom:1px solid #e1e4dc;padding:6px 8px;text-align:left;vertical-align:top}
+.note{font-size:12px;color:#6b4a2a;background:#fbf2e4;padding:8px 10px;border-radius:6px;margin-top:10px;line-height:1.7}
+</style>
+</head>
+<body>
+<header id="hdr"><h1>折り合い v2.0</h1><span class="phase-tag" id="phaseTag">準備</span></header>
+<main id="app"></main>
+<div id="modalRoot"></div>
+<script>
+'use strict';
+/* ============================================================
+   データ
+   ============================================================ */
+const TYPES={
+  house:{name:'家',soil:1,color:'#c98b54'},
+  forest:{name:'森',soil:1,color:'#5d8a4e'},
+  school:{name:'学校',soil:2,color:'#d1a83a'},
+  park:{name:'公園',soil:2,color:'#7aa66a'},
+  field:{name:'畑',soil:2,color:'#a3804a'},
+  rice:{name:'田んぼ',soil:3,color:'#8c9b3e'}
+};
+const REGIONS=[
+  {key:'A',name:'地域A',story:'原発に近い地域。住民は避難中で、人のいない町で除染が進む。',cap:9,
+   deck:{house:4,school:2,forest:2,rice:2},base:[-1,-1,-1,0,0,1]},
+  {key:'B',name:'地域B',story:'田畑の広がる地域。土が多く出る。農地を仮置場に貸してきた。',cap:11,
+   deck:{rice:4,field:3,house:2,forest:1},base:[-1,-1,-1,0,0,0]},
+  {key:'C',name:'地域C',story:'人が暮らし続けた地域。校庭・公園から除染。空き地が少なく庭先で保管。',cap:5,
+   deck:{house:4,school:3,park:3},base:[-1,-1,0,0,0,1]}
+];
+const P1EVENTS=[null,
+  {date:'2011年夏',title:'除染が始まる',body:'広い範囲で除染が始まった。土は出るが、行き先は決まっていない。',effect:'各地域、山札から2枚の土が出る。'},
+  {date:'2011〜2012年',title:'仮置場を探す',body:'公有地や借りた土地に、土を集める仮置場がつくられていく。',effect:'各地域1枚。自分の仮置場が足りなければ、他の地域に引き受けを頼める。'},
+  {date:'2012〜2013年',title:'仮置場が埋まっていく',body:'除染は進むが、仮置場は増やしきれない。庭先に置いたままの土も残る。',effect:'各地域1枚。庭先（現場保管）に残った土は、ラウンドの終わりに住民の不安になる。'},
+  {date:'2013年',title:'どこも満杯に近い',body:'3つの地域のどこにも、置ける場所がほとんどない。',effect:'各地域1枚。このラウンドの終わりで、置き場の話し合いは終わる。'}
+];
+const P2EVENTS=[
+  {key:'briefing',date:'ターン1',title:'政府の説明会',
+   body:'国が説明会を開く。施設の安全対策、30年以内に県外で最終処分する方針、土地の扱いの説明。会場には避難先から集まった住民もいる。',
+   hist:'史実：2014年5月31日〜6月15日、大熊町・双葉町の町民や候補地の地権者を対象に、県内10回・県外6回の計16回の説明会が開かれた（環境省）。',
+   voices:[
+     '「説明を聞いても、何十年も置かれ続けるとしか思えない」　会場に怒りの声が上がる。',
+     '「30年後に本当に県外へ運ぶ保証はあるのか」　質問が続くが、答えに納得できない。',
+     '「安全の管理の話は分かった。あとは条件次第だ」　説明を聞き、考え始める人がいる。',
+     '「このままでは誰も帰れない。前に進めるなら協力したい」　発言に、うなずく人がいる。'
+   ]},
+  {key:'land',date:'ターン2',title:'政府から土地の買い取りの提案',
+   body:'国が、施設の用地を買い取りたいと地権者に提案する。所有を残したまま土地を使う方式（地上権）も選べると説明される。',
+   hist:'史実：用地は大熊町・双葉町の約1,600ha。登記上の地権者は2,360人。2014年夏、国は全面買い取りの方針を改め、所有を続けられる方式も示したと報じられた。',
+   voices:[
+     '「先祖代々の土地を、国に売る気はない」　地権者の集まりで、強い言葉が出る。',
+     '「値段の問題ではない。手放したら、戻る場所がなくなる」　契約を見送る人が多い。',
+     '「売らずに貸す形も選べるなら、考えてもいい」　条件を確かめ始める人がいる。',
+     '「避難先で暮らしを建て直すには、この補償が必要だ」　契約を前向きに考える人が出る。'
+   ]},
+  {key:'time',date:'ターン3',title:'時間の経過と、住民からの決断の要請',
+   body:'避難と仮置きが長引く。町のあちこちから「町長、そろそろ決めてほしい」という声が上がる。',
+   hist:'史実：2014年9月1日、県知事が建設受け入れを容認し、両町長は地権者への説明を了承した。両町は2015年1月に建設受け入れを容認した（環境省）。',
+   voices:[
+     '「急かされて決めることではない。もっと待ってほしい」　時間をかけるよう求める声。',
+     '「町が受け入れたら、もう二度と戻れない気がする」　不安を口にする人が増える。',
+     '「庭先や仮置場の土を、いつまでもこのままにはできない」　早い決着を求める声。',
+     '「どちらでもいい。私たちは次に進みたい」　決めること自体を求める声が強まる。'
+   ]}
+];
+// 地域ごとの事情（ターン別の補正）
+const REGION_MODS=[
+  [[],[{v:+1,t:'帰還が難しく、避難先での生活再建に資金が要る'}],[{v:+1,t:'避難が長引き、先の見通しがほしい'}]],
+  [[],[{v:-1,t:'田んぼは代々の暮らしそのもの'}],[]],
+  [[{v:-1,t:'施設の近くで暮らし続けることへの不安'}],[],[]]
+];
+const TIERS=[ // 出目→段階
+  {min:1,max:1,shift:-2,name:'強く否定的',color:'#b0503a',vi:0},
+  {min:2,max:3,shift:-1,name:'否定的',color:'#c9744e',vi:1},
+  {min:4,max:5,shift:+1,name:'肯定的',color:'#4c8c63',vi:2},
+  {min:6,max:6,shift:+2,name:'強く肯定的',color:'#2f7d5b',vi:3}
+];
+const STANCE={'-1':{n:'反対',c:'var(--con)'},'0':{n:'条件次第',c:'var(--mid)'},'1':{n:'賛成',c:'var(--pro)'}};
+const OTHERS=['D','E','F','G','H','I','J','K'];
+
+/* ============================================================
+   状態
+   ============================================================ */
+let S=null;
+const sum=a=>a.reduce((x,y)=>x+y,0);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function rng(){S.rng=(Math.imul(S.rng,1664525)+1013904223)>>>0;return S.rng/4294967296;}
+function log(t){S.log.push({round:S.round,phase:S.phase,at:new Date().toISOString(),t});}
+const used=r=>sum(r.storage.map(c=>c.soil));
+const free=r=>r.cap-used(r);
+const totalFree=()=>sum(S.regions.map(free));
+
+function newGame(seed,humans){
+  S={version:'2.0',seed,rng:seed>>>0,startedAt:new Date().toISOString(),phase:'p1',step:'event',round:0,actor:0,
+     regions:[],pending:null,log:[],serial:0,p1EndReason:'',revealStep:0,
+     p2:{turn:0,idx:0,rolling:false,last:null},decIdx:0,decCover:true,slide:0};
+  REGIONS.forEach((R,i)=>{
+    const deck=[];
+    for(const [t,n] of Object.entries(R.deck))for(let k=0;k<n;k++)deck.push({id:'c'+(++S.serial),type:t,soil:TYPES[t].soil});
+    for(let j=deck.length-1;j>0;j--){const k=Math.floor(rng()*(j+1));[deck[k],deck[j]]=[deck[j],deck[k]];}
+    S.regions.push({i,key:R.key,name:R.name,human:humans[i],cap:R.cap,deck,storage:[],yard:[],tokens:5,anxiety:0,
+      received:0,sent:0,refusedTo:0,nominate:null,nomReason:'',residents:[...R.base],rolls:[],memos:['','',''],decision:null,reason:''});
+  });
+  log('ゲーム開始 seed='+seed);
+  startRound();
+}
+
+/* ---------------- フェーズ1 ---------------- */
+function startRound(){
+  S.round++;S.actor=0;S.step='event';
+  S.regions.forEach(r=>{r.yard.forEach(c=>c.isNew=false);
+    const n=S.round===1?2:1;
+    for(let k=0;k<n;k++){const c=r.deck.shift();if(c){c.isNew=true;r.yard.push(c);}}
+  });
+  log(`R${S.round} 開始：各地域に土が出る`);
+  render();
+}
+function beginTurns(){S.step='turn';S.actor=0;render();maybeCpu();}
+function store(i,cid){
+  const r=S.regions[i],c=r.yard.find(x=>x.id===cid);if(!c||free(r)<c.soil)return;
+  r.yard=r.yard.filter(x=>x!==c);r.storage.push(c);
+  log(`${r.name}：${TYPES[c.type].name}の土${c.soil}を自分の仮置場へ`);
+}
+function request(from,to,cid,offer){
+  S.pending={from,to,cid,offer};
+  const R=S.regions[to];
+  if(!R.human){respond(cpuAccept(to,cid,offer));}else render();
+}
+function cpuAccept(to,cid,offer){
+  const R=S.regions[to],c=S.regions[S.pending.from].yard.find(x=>x.id===cid);
+  const room=free(R)-c.soil;
+  if(room<0)return false;
+  if(room>=4)return true;
+  if(room>=2&&offer>=1)return true;
+  return offer>=3&&room>=0;
+}
+function respond(ok){
+  const p=S.pending;if(!p)return;
+  const A=S.regions[p.from],B=S.regions[p.to],c=A.yard.find(x=>x.id===p.cid);
+  S.pending=null;
+  if(ok&&c&&free(B)>=c.soil){
+    A.yard=A.yard.filter(x=>x!==c);B.storage.push({...c,from:A.key});
+    A.tokens-=p.offer;B.tokens+=p.offer;A.sent+=c.soil;B.received+=c.soil;
+    log(`${B.name}が${A.name}の${TYPES[c.type].name}の土${c.soil}を引き受けた（トークン${p.offer}）`);
+    flash(`${B.name}が引き受けました。`);
+  }else{
+    A.refusedTo++;
+    log(`${B.name}は${A.name}の頼み（${c?TYPES[c.type].name:''}の土・トークン${p.offer}）を断った`);
+    flash(`${B.name}は断りました。`);
+  }
+  render();
+  if(!S.regions[S.actor].human)setTimeout(cpuStep,500);
+}
+function endTurn(){
+  const r=S.regions[S.actor];
+  log(`${r.name}：手番終了（庭先の土 ${r.yard.length}枚）`);
+  if(S.actor<2){S.actor++;render();maybeCpu();}
+  else endRound();
+}
+function endRound(){
+  S.regions.forEach(r=>{r.anxiety+=r.yard.length;});
+  log(`R${S.round} 終了：庭先の土が住民の不安に（A${S.regions[0].yard.length}・B${S.regions[1].yard.length}・C${S.regions[2].yard.length}）`);
+  const tf=totalFree();
+  if(tf<3||S.round>=4){
+    S.p1EndReason=tf<3?`3地域の仮置場の空きが合わせて${tf}マス。次の土を置く場所がない。`:'4ラウンドが過ぎ、どの仮置場も満杯に近い。';
+    S.phase='p1end';log('フェーズ1終了：'+S.p1EndReason);render();
+  }else{S.step='roundEnd';render();}
+}
+function maybeCpu(){if(S.step==='turn'&&!S.regions[S.actor].human)setTimeout(cpuStep,600);}
+function cpuStep(){
+  if(S.phase!=='p1'||S.step!=='turn'||S.pending)return;
+  const i=S.actor,r=S.regions[i];if(r.human)return;
+  const cards=[...r.yard].sort((a,b)=>b.soil-a.soil);
+  for(const c of cards){
+    if(free(r)>=c.soil){store(i,c.id);render();setTimeout(cpuStep,450);return;}
+  }
+  // 頼む（1手番に1回まで）
+  if(!r._asked){
+    const c=cards.find(c=>S.regions.some((o,j)=>j!==i&&free(o)>=c.soil));
+    if(c){
+      const tgt=S.regions.filter((o,j)=>j!==i&&free(o)>=c.soil).sort((a,b)=>free(b)-free(a))[0];
+      r._asked=true;
+      request(i,tgt.i,c.id,Math.min(r.tokens,c.soil>=3?2:1));
+      return;
+    }
+  }
+  r._asked=false;endTurn();
+}
+
+/* ---------------- 候補の話し合い・明かし ---------------- */
+function nominateCpu(){
+  S.regions.forEach(r=>{if(!r.human&&r.nominate===null){
+    const others=S.regions.filter(o=>o!==r).sort((a,b)=>free(b)-free(a)||b.cap-a.cap);
+    r.nominate=others[0].i;r.nomReason=`${others[0].name}のほうが土地に余裕がある`;
+  }});
+}
+
+/* ---------------- フェーズ2 ---------------- */
+function phase1Mods(r){
+  const m=[[],[],[]];
+  if(r.received>=3)m[0].push({v:-1,t:`フェーズ1で他の地域の土を${r.received}引き受けてきた。「もう十分だ」`});
+  if(r.sent>=3)m[0].push({v:+1,t:`フェーズ1で他の地域に土を${r.sent}頼んだ。「今度はこちらが」`});
+  if(r.yard.length>=2)m[2].push({v:+1,t:`庭先に土が${r.yard.length}枚残ったまま。「早く片付けてほしい」`});
+  return m;
+}
+function modsFor(i,t){return [...REGION_MODS[i][t],...phase1Mods(S.regions[i])[t]];}
+function shiftResidents(r,n){
+  const moved=[];
+  for(let k=0;k<Math.abs(n);k++){
+    let idx;
+    if(n>0){idx=r.residents.indexOf(0);if(idx<0)idx=r.residents.indexOf(-1);if(idx<0)break;r.residents[idx]++;}
+    else{idx=r.residents.indexOf(0);if(idx<0)idx=r.residents.indexOf(1);if(idx<0)break;r.residents[idx]--;}
+    moved.push(idx);
+  }
+  return moved;
+}
+function doRoll(face){
+  const t=S.p2.turn,i=S.p2.idx,r=S.regions[i];
+  const mods=modsFor(i,t),mod=sum(mods.map(m=>m.v));
+  const val=Math.max(1,Math.min(6,face+mod));
+  const tier=TIERS.find(x=>val>=x.min&&val<=x.max);
+  const moved=shiftResidents(r,tier.shift);
+  const res={turn:t,face,mod,val,tier:tier.name,shift:tier.shift,voice:P2EVENTS[t].voices[tier.vi],moved};
+  r.rolls[t]=res;S.p2.last=res;
+  log(`${P2EVENTS[t].title}：${r.name} 出目${face}${mod?`（補正${mod>0?'+':''}${mod}→${val}）`:''} ${tier.name}`);
+  render();
+  if(!r.human)setTimeout(()=>{if(S.p2.last===res)nextRoll();},2200);
+}
+function rollAnim(){
+  if(S.p2.rolling)return;S.p2.rolling=true;render();
+  setTimeout(()=>{S.p2.rolling=false;doRoll(1+Math.floor(Math.random()*6));},900);
+}
+function nextRoll(){
+  S.p2.last=null;
+  if(S.p2.idx<2){S.p2.idx++;}
+  else{S.p2.idx=3;} // 3=ターン終了表示
+  render();
+  if(S.p2.idx<3&&!S.regions[S.p2.idx].human)setTimeout(rollAnim,700);
+}
+function nextTurn(){
+  if(S.p2.turn<2){S.p2.turn++;S.p2.idx=-1;render();}
+  else{S.phase='decide';S.decIdx=0;S.decCover=true;render();}
+}
+function startTurnRolls(){S.p2.idx=0;S.p2.last=null;render();if(!S.regions[0].human)setTimeout(rollAnim,600);}
+function cpuDecide(r){
+  const pro=r.residents.filter(x=>x===1).length,mid=r.residents.filter(x=>x===0).length;
+  const p=(pro+0.5*mid)/6+0.15;
+  r.decision=Math.random()<p?'accept':'reject';
+  r.reason=r.decision==='accept'?'町の土を置く場所が他にない。条件を確かめながら協力する。':'住民の多くが納得していない。今は受け入れられない。';
+}
+const count=(r,v)=>r.residents.filter(x=>x===v).length;
+
+/* ============================================================
+   描画
+   ============================================================ */
+const app=document.getElementById('app'),modalRoot=document.getElementById('modalRoot');
+let flashMsg='';
+function flash(m){flashMsg=m;}
+function setHeader(){
+  const h=document.getElementById('hdr'),tag=document.getElementById('phaseTag');
+  const p2=['reveal','p2','decide','outcome','reflect'].includes(S?.phase);
+  h.className=p2?'p2':'';
+  tag.textContent=!S?'準備':S.phase==='p1'?`フェーズ1　土の行き先　R${S.round}`:S.phase==='p1end'||S.phase==='nominate'?'フェーズ1　終わり':
+    S.phase==='reveal'?'知らせ':S.phase==='p2'?`フェーズ2　受け入れの問い　ターン${S.p2.turn+1}/3`:S.phase==='decide'?'フェーズ2　町長の決断':
+    S.phase==='outcome'?'決断のあと':'振り返り';
+}
+function render(){
+  setHeader();modalRoot.innerHTML='';
+  if(!S)return renderSetup();
+  ({p1:renderP1,p1end:renderP1End,nominate:renderNominate,reveal:renderReveal,p2:renderP2,decide:renderDecide,outcome:renderOutcome,reflect:renderReflect})[S.phase]();
+  flashMsg='';
+}
+function modal(html){modalRoot.innerHTML=`<div class="overlay"><div class="modal" role="dialog" aria-modal="true">${html}</div></div>`;}
+
+/* ---------- 準備 ---------- */
+function renderSetup(){
+  app.innerHTML=`<div class="card-box">
+  <h2>福島の除去土壌をめぐる3人用ゲーム（試作 v2.0）</h2>
+  <p>あなたは地域A・B・Cの町長です。<b>フェーズ1</b>では、除染で出た土を3地域で受け渡しながら仮置場に置きます。仮置場がいっぱいになると、ゲームは<b>フェーズ2</b>へ。そこからは別のゲームになります。</p>
+  <details><summary>遊び方の要点（約2分）</summary>
+  <ul style="line-height:1.9">
+    <li><b>フェーズ1：土の行き先</b>（最大4ラウンド）　毎ラウンド土の札が出る。自分の仮置場に置くか、他の地域にトークンを渡して引き受けを頼むか、庭先に置いたままにする。庭先の土は住民の不安になる。</li>
+    <li>3地域の仮置場が満杯になったら、置き場の話し合いへ。</li>
+    <li><b>フェーズ2：受け入れの問い</b>（3ターン）　毎ターン出来事が起き、各町長がサイコロを振る。出目で、住民がその出来事に肯定的に動くか、否定的に動くかが分かる。</li>
+    <li>3ターン目の後、町長として施設を<b>受け入れるかどうか</b>を、他の人に見せずに決める。勝ち負けはない。</li>
+    <li>最後に、実際の大熊町・双葉町の経緯を振り返る。</li>
+  </ul></details>
+  <h3>席</h3>
+  <div class="row" style="margin:10px 0 18px">
+   ${REGIONS.map((R,i)=>`<label>${R.name} <select id="seat${i}"><option value="h">人</option><option value="c">CPU</option></select></label>`).join('')}
+  </div>
+  <div class="row"><label>種（seed） <input id="seed" type="number" value="${1+Math.floor(Math.random()*999)}" style="width:100px"></label>
+  <button class="primary" id="start">はじめる</button></div>
+  <p class="note">地域A・B・Cは架空の地域です。出来事の年や数字は、振り返りで実際の資料と見比べられるように示しています。ゲームの効果は想定です。</p>
+  </div>`;
+  document.getElementById('start').onclick=()=>{
+    const humans=[0,1,2].map(i=>document.getElementById('seat'+i).value==='h');
+    newGame(+document.getElementById('seed').value||1,humans);
+  };
+}
+
+/* ---------- フェーズ1 ---------- */
+function soilCard(c,acts=''){
+  return `<div class="soilcard" style="--c:${TYPES[c.type].color}"><b>${TYPES[c.type].name}</b><span class="dots" title="土${c.soil}">${'●'.repeat(c.soil)}</span>${c.isNew?'<span class="new">新しい</span>':''}${c.from?`<small>${c.from}から</small>`:''}<span class="acts">${acts}</span></div>`;
+}
+function storageCells(r){
+  let h='';
+  for(const c of r.storage)for(let k=0;k<c.soil;k++)h+=`<span class="cell filled" style="background:${TYPES[c.type].color}" title="${TYPES[c.type].name}${c.from?'（'+c.from+'から）':''}"></span>`;
+  for(let k=0;k<free(r);k++)h+='<span class="cell"></span>';
+  return h;
+}
+function regionPanel(r,i){
+  const cur=S.step==='turn'&&S.actor===i;
+  let yard='';
+  if(!r.yard.length)yard='<div class="empty">庭先に土はない</div>';
+  else yard=r.yard.map(c=>{
+    let acts='';
+    if(cur&&r.human&&!S.pending){
+      acts+=`<button class="small" data-store="${c.id}" ${free(r)<c.soil?'disabled title="空きが足りない"':''}>自分の仮置場へ</button>`;
+      S.regions.forEach((o,j)=>{if(j!==i)acts+=`<button class="small" data-ask="${c.id}" data-to="${j}" ${free(o)<c.soil?'disabled title="相手の空きが足りない"':''}>${o.key}に頼む</button>`;});
+    }
+    return soilCard(c,acts);
+  }).join('');
+  return `<section class="region ${cur?'current':''}">
+   <h2>${r.name} <small>${r.human?'人':'CPU'}${cur?'・手番':''}</small></h2>
+   <p class="story">${REGIONS[i].story}</p>
+   <div class="stat"><span>トークン ${r.tokens}</span><span>住民の不安 ${r.anxiety}</span><span>引き受けた土 ${r.received}</span><span>頼んだ土 ${r.sent}</span><span>山札 ${r.deck.length}</span></div>
+   <div class="label">仮置場（${used(r)}/${r.cap}マス）</div>
+   <div class="storage">${storageCells(r)}</div>
+   <div class="label">庭先（現場保管）</div>
+   <div class="yard">${yard}</div>
+  </section>`;
+}
+function renderP1(){
+  const E=P1EVENTS[S.round];
+  const flow=`<div class="flow">${[1,2,3,4].map(n=>`<span class="${n===S.round?'active':n<S.round?'done':''}">R${n}</span>`).join('')}<span>フェーズ2</span></div>`;
+  let panel='';
+  if(S.step==='event'){
+    panel=`<div class="panel"><div class="event" style="--layer:#3c7868"><div class="date">${E.date}</div><h2>${E.title}</h2><p>${E.body}</p><div class="effect">${E.effect}</div></div>
+    <button class="primary" id="go">手番へ（A→B→C）</button></div>`;
+  }else if(S.step==='turn'){
+    const r=S.regions[S.actor];
+    panel=`<div class="panel"><div class="row"><strong style="font-size:18px">${r.name}の手番</strong>
+     <span>庭先の土を、自分の仮置場に置くか、他の地域に頼む。置ききれない土は庭先に残る。</span>
+     ${r.human?`<button class="primary" id="end" style="margin-left:auto">手番を終える</button>`:'<span style="margin-left:auto">CPUが考えています…</span>'}</div>
+     <div class="status">${esc(flashMsg)}</div></div>`;
+  }else if(S.step==='roundEnd'){
+    panel=`<div class="panel"><h3 style="margin-top:0">R${S.round}の終わり</h3><p>庭先に残った土の枚数だけ、住民の不安が増えました。仮置場の空きは合わせて${totalFree()}マス。</p><button class="primary" id="next">次のラウンドへ</button></div>`;
+  }
+  app.innerHTML=flow+panel+`<div class="board">${S.regions.map(regionPanel).join('')}</div>
+   <h3>記録</h3><div class="log">${S.log.slice(-14).reverse().map(l=>esc(l.t)).join('<br>')}</div>`;
+  const q=id=>document.getElementById(id);
+  if(q('go'))q('go').onclick=beginTurns;
+  if(q('end'))q('end').onclick=endTurn;
+  if(q('next'))q('next').onclick=startRound;
+  app.querySelectorAll('[data-store]').forEach(b=>b.onclick=()=>{store(S.actor,b.dataset.store);render();});
+  app.querySelectorAll('[data-ask]').forEach(b=>b.onclick=()=>askModal(b.dataset.ask,+b.dataset.to));
+  if(S.pending&&S.regions[S.pending.to].human){
+    const p=S.pending,A=S.regions[p.from],B=S.regions[p.to],c=A.yard.find(x=>x.id===p.cid);
+    modal(`<h2>${B.name}の町長へ</h2><p>${A.name}から、<b>${TYPES[c.type].name}の土${c.soil}</b>を引き受けてほしいと頼まれています。お礼のトークンは<b>${p.offer}</b>。</p>
+     <p>引き受けると、あなたの仮置場の空きは${free(B)}→${free(B)-c.soil}マスになります。</p>
+     <div class="row"><button class="primary" id="yes">引き受ける</button><button id="no">断る</button></div>`);
+    document.getElementById('yes').onclick=()=>respond(true);
+    document.getElementById('no').onclick=()=>respond(false);
+  }
+}
+function askModal(cid,to){
+  const A=S.regions[S.actor],B=S.regions[to],c=A.yard.find(x=>x.id===cid);
+  const max=Math.min(3,A.tokens);
+  modal(`<h2>${B.name}に頼む</h2><p><b>${TYPES[c.type].name}の土${c.soil}</b>を、${B.name}の仮置場に引き受けてもらうよう頼みます。お礼のトークンを決めてください（持っているのは${A.tokens}）。</p>
+   <div class="row">${Array.from({length:max+1},(_,k)=>`<button data-offer="${k}">${k}</button>`).join('')}<button id="cancel">やめる</button></div>`);
+  modalRoot.querySelectorAll('[data-offer]').forEach(b=>b.onclick=()=>request(S.actor,to,cid,+b.dataset.offer));
+  document.getElementById('cancel').onclick=render;
+}
+function renderP1End(){
+  app.innerHTML=`<div class="card-box fade">
+   <h2>これ以上、仮置場に置けない</h2>
+   <p>${esc(S.p1EndReason)}</p>
+   <table><tr><th></th><th>仮置場</th><th>庭先の土</th><th>住民の不安</th><th>引き受けた土</th><th>頼んだ土</th></tr>
+   ${S.regions.map(r=>`<tr><th>${r.name}</th><td>${used(r)}/${r.cap}</td><td>${r.yard.length}枚</td><td>${r.anxiety}</td><td>${r.received}</td><td>${r.sent}</td></tr>`).join('')}</table>
+   <p style="margin-top:16px">仮置場は「仮」の場所です。土を長く、まとめて保管する施設――<b>中間貯蔵施設</b>をつくるしかない。3人の町長が集まり、<b>どこに建てるか</b>の検討が始まります。</p>
+   <button class="primary" id="go">建設の検討へ</button></div>`;
+  document.getElementById('go').onclick=()=>{S.phase='nominate';nominateCpu();render();};
+}
+function renderNominate(){
+  const allDone=S.regions.every(r=>r.nominate!==null);
+  app.innerHTML=`<div class="card-box">
+   <h2>中間貯蔵施設を、どこに建てるべきか</h2>
+   <p>A・B・Cのどこかに建てるとしたら、どこがよいでしょう。各町長が1つ選び、ひと言理由を添えてください（自分の地域を選んでもかまいません）。</p>
+   ${S.regions.map(r=>`<div class="panel"><strong>${r.name}の町長</strong>${r.human?`
+     <div class="row" style="margin:8px 0">${S.regions.map(o=>`<button class="small ${r.nominate===o.i?'primary':''}" data-nom="${r.i}" data-to="${o.i}">${o.name}</button>`).join('')}</div>
+     <input data-reason="${r.i}" placeholder="理由（ひと言）" value="${esc(r.nomReason)}" style="width:100%">`:
+     `<p style="margin:6px 0">CPU：${S.regions[r.nominate].name}（${esc(r.nomReason)}）</p>`}</div>`).join('')}
+   <button class="primary" id="go" ${allDone?'':'disabled'}>結果を見る</button></div>`;
+  app.querySelectorAll('[data-nom]').forEach(b=>b.onclick=()=>{
+    const r=S.regions[+b.dataset.nom];r.nominate=+b.dataset.to;
+    const inp=app.querySelector(`[data-reason="${r.i}"]`);if(inp)r.nomReason=inp.value;render();});
+  app.querySelectorAll('[data-reason]').forEach(inp=>inp.oninput=()=>{S.regions[+inp.dataset.reason].nomReason=inp.value;});
+  document.getElementById('go').onclick=()=>{
+    S.regions.forEach(r=>log(`候補の指名：${r.name}→${S.regions[r.nominate].name}「${r.nomReason}」`));
+    S.phase='reveal';S.revealStep=0;render();};
+}
+
+/* ---------- 明かし ---------- */
+function mapSvg(step){
+  // 県の形（簡略）と地域。A・B・Cは海側中央
+  const pos={A:[455,250],B:[395,205],C:[395,300],D:[300,120],E:[200,170],F:[110,250],G:[190,310],H:[300,380],I:[150,380],J:[285,245],K:[440,120]};
+  let g=`<rect x="40" y="60" width="480" height="370" rx="40" fill="#eef0e6" stroke="#9fac9a" stroke-width="3"/>
+   <rect x="520" y="60" width="60" height="370" fill="#d7e6ee"/><text x="550" y="250" font-size="14" fill="#476a7b" writing-mode="tb">海</text>
+   <circle cx="505" cy="250" r="9" fill="#555"/><text x="505" y="232" text-anchor="middle" font-size="11" fill="#555">原発</text>`;
+  const node=(k,x,y,color,label)=>`<g class="fade"><circle cx="${x}" cy="${y}" r="30" fill="${color}" stroke="#fff" stroke-width="3"/><text x="${x}" y="${y+6}" text-anchor="middle" font-size="18" font-weight="700" fill="#fff">${k}</text>${label?`<text x="${x}" y="${y+46}" text-anchor="middle" font-size="11" fill="#7a3b2a">${label}</text>`:''}</g>`;
+  if(step>=2)OTHERS.forEach(k=>{if(pos[k]){const [x,y]=pos[k];g+=`<line class="fade" x1="${x}" y1="${y}" x2="415" y2="252" stroke="#775b98" stroke-width="2" stroke-dasharray="4 4" opacity=".7"/>`;}});
+  if(step>=2)g+=`<g class="fade"><ellipse cx="420" cy="252" rx="66" ry="84" fill="#775b98" fill-opacity=".35" stroke="#4b3a63" stroke-width="4" stroke-dasharray="8 5"/>
+     <text x="420" y="358" text-anchor="middle" font-size="14" font-weight="800" fill="#4b3a63">中間貯蔵施設（予定）</text></g>`;
+  if(step>=1)OTHERS.forEach(k=>{if(pos[k])g+=node(k,pos[k][0],pos[k][1],'#9a8f84','仮置場 満杯');});
+  ['A','B','C'].forEach(k=>g+=node(k,pos[k][0],pos[k][1],'#2f705d',''));
+  return `<svg class="map" viewBox="20 40 580 420" role="img" aria-label="県内の地域と施設の予定地">${g}</svg>`;
+}
+function renderReveal(){
+  const tally=[0,0,0];S.regions.forEach(r=>tally[r.nominate]++);
+  const steps=[
+    `<p>3人の指名：${S.regions.map(r=>`${r.name}→<b>${S.regions[r.nominate].name}</b>`).join('　')}</p>
+     <p>最も名前の挙がったのは${tally.map((n,i)=>n===Math.max(...tally)?S.regions[i].name:null).filter(Boolean).join('・')}。話し合いを続けようとしたところで、国から知らせが届きます。</p>`,
+    `<p class="reveal-big fade">実は、除染が行われていたのはA・B・Cだけではなかった。</p>
+     <p class="fade">D・E・F・G・H……。県内の多くの地域で除染が進み、どこの仮置場も同じように満杯に近い。あなたたちが受け渡していた土は、県全体の土のほんの一部だった。</p>`,
+    `<p class="reveal-big fade">国は、A・B・Cにまたがる場所に<br>中間貯蔵施設を建てたいと考えている。</p>
+     <p class="fade">原発に近く、広い土地がとれる。県内すべての地域の土が、ここに運び込まれる。<br><b>どこに建てるかを話し合っていた3人は、全員が「受け入れる側」になった。</b></p>
+     <p class="fade">ここからは、町長として、施設を町として受け入れるかどうかを考えるフェーズです。</p>`
+  ];
+  app.innerHTML=`<div class="card-box"><h2>国からの知らせ</h2>${mapSvg(S.revealStep)}${steps.slice(0,S.revealStep+1).join('')}
+   <div class="row" style="margin-top:14px">${S.revealStep<2?`<button class="primary" id="more">続きを見る</button>`:`<button class="primary" id="go">フェーズ2へ</button>`}</div></div>`;
+  const q=id=>document.getElementById(id);
+  if(q('more'))q('more').onclick=()=>{S.revealStep++;render();};
+  if(q('go'))q('go').onclick=()=>{S.phase='p2';S.p2={turn:0,idx:-1,rolling:false,last:null};log('フェーズ2開始');render();};
+}
+
+/* ---------- フェーズ2 ---------- */
+function residentsHtml(r,moved=[]){
+  return `<div class="residents">${r.residents.map((v,k)=>`<div class="person ${moved.includes(k)?'moved':''}" style="--pc:${STANCE[v].c}"><div class="head"></div><div class="body"></div>${STANCE[v].n}</div>`).join('')}</div>`;
+}
+function legend(){return `<div class="legend">${['1','0','-1'].map(k=>`<span><i style="background:${STANCE[k].c}"></i>${STANCE[k].n}</span>`).join('')}</div>`;}
+function p2Region(r,i){
+  const t=S.p2.turn,cur=S.p2.idx===i,res=r.rolls[t];
+  const mods=modsFor(i,t);
+  return `<section class="region ${cur?'current':''}">
+   <h2>${r.name}の住民 <small>${r.human?'人':'CPU'}</small></h2>
+   ${residentsHtml(r,res&&cur?res.moved:[])}
+   <div class="stat"><span>賛成 ${count(r,1)}</span><span>条件次第 ${count(r,0)}</span><span>反対 ${count(r,-1)}</span></div>
+   <div class="label">このターンの事情</div>
+   ${mods.length?`<ul class="mods">${mods.map(m=>`<li>${m.v>0?'+':''}${m.v}：${esc(m.t)}</li>`).join('')}</ul>`:'<div class="empty">補正なし</div>'}
+   ${res?`<div class="voice" style="--vc:${TIERS.find(x=>x.name===res.tier).color}"><span class="tier" style="background:${TIERS.find(x=>x.name===res.tier).color}">${res.tier}</span> ${esc(res.voice)}</div>`:''}
+   ${r.rolls.slice(0,t).filter(Boolean).length?`<details><summary style="font-size:12px">これまでの声</summary>${r.rolls.slice(0,t).map((x,k)=>x?`<p style="font-size:12px;margin:4px 0">${P2EVENTS[k].title}：${esc(x.voice)}</p>`:'').join('')}</details>`:''}
+  </section>`;
+}
+function renderP2(){
+  const t=S.p2.turn,E=P2EVENTS[t];
+  const flow=`<div class="flow p2">${P2EVENTS.map((e,k)=>`<span class="${k===t?'active':k<t?'done':''}">${e.title}</span>`).join('')}<span>町長の決断</span></div>`;
+  let panel=`<div class="panel"><div class="event" style="--layer:#775b98"><div class="date">${E.date}</div><h2>${E.title}</h2><p>${E.body}</p><div class="hist">${E.hist}</div></div>`;
+  if(S.p2.idx===-1){
+    panel+=`<p>各町長が順にサイコロを振ります。出目に地域の事情の補正を足し、<b>1＝強く否定的　2〜3＝否定的　4〜5＝肯定的　6＝強く肯定的</b>。住民がその分だけ動きます。</p>
+     <button class="primary" id="start">地域Aからサイコロを振る</button>`;
+  }else if(S.p2.idx<3){
+    const r=S.regions[S.p2.idx],res=S.p2.last;
+    const mod=sum(modsFor(S.p2.idx,t).map(m=>m.v));
+    panel+=`<div class="row"><strong style="font-size:18px">${r.name}の町長</strong>
+      <span class="dice ${S.p2.rolling?'rolling':''}">${res?res.face:S.p2.rolling?'?':'・'}</span>
+      ${res?`<span>補正 ${mod>=0?'+':''}${mod} → <b>${res.val}</b></span>`:`<span>補正 ${mod>=0?'+':''}${mod}</span>`}
+      ${!res&&r.human&&!S.p2.rolling?`<button class="primary" id="roll">サイコロを振る</button><span style="font-size:12px">手元のサイコロの目：</span>${[1,2,3,4,5,6].map(n=>`<button class="small" data-face="${n}">${n}</button>`).join('')}`:''}
+      ${res&&r.human?`<button class="primary" id="next" style="margin-left:auto">${S.p2.idx<2?'次の地域へ':'このターンのまとめへ'}</button>`:''}
+    </div>
+    ${res&&r.human?`<label style="display:block;margin-top:10px;font-size:13px">町長メモ（任意）：いま考えていること<textarea id="memo" placeholder="例：反対の声が強い。説明会をもう一度開いてほしいと国に言うべきか">${esc(r.memos[t])}</textarea></label>`:''}`;
+  }else{
+    panel+=`<p><b>ターン${t+1}の終わり。</b>${t<2?'次の出来事へ進みます。':'住民から「町長、決めてほしい」という声がたくさん上がっています。'}</p>
+     <button class="primary" id="turn">${t<2?'次のターンへ':'町長として決断する'}</button>`;
+  }
+  panel+='</div>';
+  app.innerHTML=flow+panel+legend()+`<div class="board" style="margin-top:8px">${S.regions.map(p2Region).join('')}</div>`;
+  const q=id=>document.getElementById(id);
+  if(q('start'))q('start').onclick=startTurnRolls;
+  if(q('roll'))q('roll').onclick=rollAnim;
+  app.querySelectorAll('[data-face]').forEach(b=>b.onclick=()=>doRoll(+b.dataset.face));
+  if(q('memo'))q('memo').oninput=e=>{S.regions[S.p2.idx].memos[t]=e.target.value;};
+  if(q('next'))q('next').onclick=nextRoll;
+  if(q('turn'))q('turn').onclick=nextTurn;
+}
+
+/* ---------- 決断 ---------- */
+function renderDecide(){
+  if(S.decIdx>2){S.regions.forEach(r=>log(`${r.name}の決断：${r.decision==='accept'?'受け入れる':'受け入れない'}「${r.reason}」`));S.phase='outcome';return render();}
+  const r=S.regions[S.decIdx];
+  if(!r.human){cpuDecide(r);S.decIdx++;return render();}
+  if(S.decCover){
+    app.innerHTML=`<div class="card-box"><div class="cover"><h2>${r.name}の町長だけが画面を見てください</h2><p>他の町長は画面から目を離してください。決断は、全員が決めてから同時に明かします。</p><button class="primary" id="see">${r.name}の町長です。見る</button></div></div>`;
+    document.getElementById('see').onclick=()=>{S.decCover=false;render();};
+    return;
+  }
+  app.innerHTML=`<div class="card-box">
+   <h2>${r.name}の町長として</h2>
+   <p>国は、A・B・Cにまたがる中間貯蔵施設の建設を求めています。県内すべての地域の土が運び込まれます。30年以内に県外で最終処分するという約束つきです。</p>
+   <h3>いまの住民</h3>${residentsHtml(r)}${legend()}
+   <h3>これまでの声</h3><ul style="line-height:1.8">${r.rolls.map((x,k)=>x?`<li>${P2EVENTS[k].title}：${esc(x.voice)}</li>`:'').join('')}</ul>
+   ${r.memos.some(Boolean)?`<h3>あなたのメモ</h3><ul>${r.memos.map(m=>m?`<li>${esc(m)}</li>`:'').join('')}</ul>`:''}
+   <h3>町として、施設を受け入れますか</h3>
+   <div class="choice-grid"><button class="choice ${r.decision==='accept'?'sel':''}" data-d="accept">受け入れる</button><button class="choice ${r.decision==='reject'?'sel':''}" data-d="reject">受け入れない</button></div>
+   <label style="display:block">理由（住民に向けて話すつもりで）<textarea id="reason">${esc(r.reason)}</textarea></label>
+   <div class="row" style="margin-top:12px"><button class="primary" id="ok" ${r.decision?'':'disabled'}>この決断で確定する</button></div>
+   <p class="note">勝ち負けはありません。正解もありません。</p></div>`;
+  app.querySelectorAll('[data-d]').forEach(b=>b.onclick=()=>{r.reason=document.getElementById('reason').value;r.decision=b.dataset.d;render();});
+  document.getElementById('reason').oninput=e=>{r.reason=e.target.value;};
+  document.getElementById('ok').onclick=()=>{S.decIdx++;S.decCover=true;render();};
+}
+
+/* ---------- 決断のあと ---------- */
+function outcomeText(n,acc){
+  const names=acc.map(r=>r.name).join('・');
+  if(n===3)return {title:'A・B・Cにまたがる施設の建設へ',body:'3つの地域すべてが受け入れた。地権者への説明と土地の契約が始まる。D・E・F……県内の仮置場や庭先の土が、少しずつ運び込まれていく。'};
+  if(n===2)return {title:`${names}に施設を集める計画へ`,body:`受け入れなかった地域を外し、${names}の2地域に施設を集める計画へと見直される。土を置く面積は2地域で確保しなければならない。<br><small>実際にも、当初の3町（大熊・双葉・楢葉）の案は、県の申し入れを受けて2町に集約された。</small>`};
+  if(n===1)return {title:`${names}だけでは足りない`,body:`1地域だけでは必要な面積がとれない。国は計画と条件を見直し、もう一度協議を求めてくる。${names}では、町が受け入れたことで、話し合いの席が先にできた。`};
+  return {title:'計画は出し直しへ',body:'3地域とも受け入れなかった。国は計画を出し直し、条件の上積みや、約束を法律にすることを検討し始める。県内の仮置場の土は、まだしばらく動かない。'};
+}
+function renderOutcome(){
+  const acc=S.regions.filter(r=>r.decision==='accept');
+  const o=outcomeText(acc.length,acc);
+  app.innerHTML=`<div class="card-box">
+   <h2>3人の決断</h2>
+   <div class="board" style="margin:12px 0">${S.regions.map(r=>{
+     const pro=count(r,1),con=count(r,-1),mid=count(r,0);
+     const weight=r.decision==='accept'
+       ?`反対の住民${con}人・条件次第の${mid}人に、説明を続け、条件を国に求め続ける責任を引き受けた。`
+       :`早く進めたい住民${pro}人・条件次第の${mid}人に、別の道筋を示す責任を引き受けた。`;
+     return `<section class="region fade"><h2>${r.name}<small>${r.human?'人':'CPU'}</small></h2>
+      <p style="font-size:22px;font-weight:800;color:${r.decision==='accept'?'var(--pro)':'var(--con)'}">${r.decision==='accept'?'受け入れる':'受け入れない'}</p>
+      ${r.reason?`<p class="quote" style="font-size:13px">${esc(r.reason)}</p>`:''}
+      ${residentsHtml(r)}<p style="font-size:13px;line-height:1.7">${weight}</p></section>`;}).join('')}</div>
+   <div class="event fade" style="--layer:#775b98"><h2>${o.title}</h2><p>${o.body}</p></div>
+   <p>どちらを選んでも、引き受ける重さがあります。実際の大熊町・双葉町では、何が起きたのでしょうか。</p>
+   <div class="row"><button class="primary" id="go">振り返りへ</button><button id="save">記録を保存（JSON）</button></div></div>`;
+  document.getElementById('go').onclick=()=>{S.phase='reflect';S.slide=0;render();};
+  document.getElementById('save').onclick=saveJson;
+}
+function saveJson(){
+  const data={...S,endedAt:new Date().toISOString()};
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`oriai-v2.0-seed${S.seed}.json`;a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+
+/* ---------- 振り返り ---------- */
+const SRC={
+  history:['中間貯蔵施設の経緯（環境省 統一的な基礎資料）','https://www.env.go.jp/chemi/rhm/r4kisoshiryo/attach/202303mat1-09-8.pdf'],
+  briefing:['中間貯蔵施設に関する説明会の開催について（環境省 2014/5/21）','https://www.env.go.jp/press/18189.html'],
+  okuma:['渡辺利綱 前大熊町長の証言（環境省「ふくしま、未来」）','https://fukushima-mirai.env.go.jp/activity/article/pdf/fukushima100_100.pdf'],
+  futaba:['伊澤史朗 双葉町長の証言（環境省「ふくしま、未来」）','https://fukushima-mirai.env.go.jp/activity/article/pdf/fukushima100_006.pdf'],
+  land:['用地取得の状況（環境省 統一的な基礎資料）','https://www.env.go.jp/chemi/rhm/current/attach/202603mat1-09-9.pdf'],
+  landNews:['用地の全面買い取り方針の見直し（朝日新聞 2014年7月の報道を紹介する記事・英語）','https://lucian.uchicago.edu/blogs/atomicage/2014/07/29/plan-dropped-for-land-purchases-to-host-nuclear-debris-storage-sites-via-the-asahi-shimbun/'],
+  pref:['福島県知事の申し入れ（2014/2/12）','https://shiteihaiki.env.go.jp/tokuteihaiki_umetate_fukushima/landfill_disposal_outline/pdf/review_140212.pdf'],
+  answer:['国の回答（2014/3/27）','https://shiteihaiki.env.go.jp/tokuteihaiki_umetate_fukushima/landfill_disposal_outline/pdf/review_140327.pdf']
+};
+const srcLink=k=>`<a href="${SRC[k][1]}" target="_blank" rel="noopener noreferrer">${SRC[k][0]}</a>`;
+function slides(){
+  const acc=S.regions.filter(r=>r.decision==='accept').length;
+  return [
+   {t:'あなたたちの決断',h:`<p>3人の町長のうち、<b>${acc}人が受け入れ、${3-acc}人が受け入れなかった</b>。</p>
+     <table><tr><th></th><th>決断</th><th>理由</th><th>決断のときの住民</th></tr>
+     ${S.regions.map(r=>`<tr><th>${r.name}</th><td>${r.decision==='accept'?'受け入れる':'受け入れない'}</td><td>${esc(r.reason)||'—'}</td><td>賛成${count(r,1)}・条件次第${count(r,0)}・反対${count(r,-1)}</td></tr>`).join('')}</table>
+     <p style="margin-top:14px">ゲームの中のA・B・Cは架空の地域です。実際に中間貯蔵施設を受け入れたのは、福島第一原発が立地する<b>大熊町と双葉町</b>でした。</p>`},
+   {t:'実際の経緯：3町への要請から2町の受け入れへ',h:`<ul class="timeline">
+     <li><b>2011年8月</b>首相が県知事に、県内に中間貯蔵施設をつくる考えを伝える。</li>
+     <li><b>2011年10月</b>国が方針を示す。30年以内に県外で最終処分する。</li>
+     <li><b>2011年12月</b>国が双葉郡に施設の検討を求める。</li>
+     <li><b>2013年12月</b>国が大熊町・双葉町・楢葉町への設置を県と町に正式に求める。</li>
+     <li><b>2014年2〜3月</b>県が2町への集約などを申し入れ、国が受け入れる。楢葉町は外れる。</li>
+     <li><b>2014年5〜6月</b>県内外で計16回の住民説明会。</li>
+     <li><b>2014年8〜9月</b>国が財政措置と県外最終処分の法制化方針を示す。9月1日、知事が建設を容認し、両町長は地権者への説明を了承。</li>
+     <li><b>2015年1月</b>大熊町・双葉町が建設受け入れを容認。</li>
+     <li><b>2015年2〜3月</b>県・両町が搬入を受け入れ、3月からパイロット輸送が始まる。</li></ul>
+     <p class="src">出典：${srcLink('history')}／${srcLink('pref')}／${srcLink('answer')}／${srcLink('briefing')}</p>
+     <p class="note">ゲームの「3地域にまたがる施設」は、当初の3町案を簡略化したものです。ゲームの3ターンは、実際には約1年半の出来事にあたります。</p>`},
+   {t:'大熊町長が見ていた住民',h:`<p>当時の渡辺利綱・大熊町長は、受け入れの決断が震災後でいちばん大変だったと振り返っています。</p>
+     <div class="quote">町民の意見は三つに分かれていた。<b>帰還は難しいから賛成する人</b>、<b>先祖の土地を守りたいと反対する人</b>、<b>条件によっては協力するという人</b>。反対の人が圧倒的に多く、町長として国に「反対」を表明することもできた。<br>
+     しかし、大熊町の土を受け入れる場所が他にあるのか。なければ町はこのままになる。それなら国に協力して、町民の生活の再建を図るほうがよい。そう説得して、受け入れを決めた。</div>
+     <p class="src">要約：${srcLink('okuma')}（2021年の証言）</p>
+     <p>ゲームの住民の「賛成・条件次第・反対」は、この証言をもとにしています。</p>`},
+   {t:'双葉町長が見ていた住民',h:`<p>伊澤史朗・双葉町長も、受け入れの決定が震災後の取り組みでいちばん大変だったと語っています。</p>
+     <div class="quote">いまは「双葉町と大熊町で受け入れるしかなかった」と、ある程度納得する町民が増えてきた。それでも、避難生活が続くなかで、先祖から受け継いだ土地や家、財産まで手放さなければならなかった。町民の悲しみと苦しみに満ちた表情は、今も忘れられない。</div>
+     <p class="src">要約：${srcLink('futaba')}（2021年の証言）</p>
+     <p>受け入れを決めた町長も、決めたあと、住民の悲しみを引き受け続けています。</p>`},
+   {t:'受け入れなかった判断も、間違いではない',h:`<p>実際の経緯では、すぐに「はい」と言わなかったこと、条件を求め続けたことが、約束の中身を変えていきました。</p>
+     <table>
+      <tr><th>求められたこと</th><th>その後</th></tr>
+      <tr><td>3町に分ける案の見直し</td><td>県の申し入れで、2町に集約（2014年3月）</td></tr>
+      <tr><td>30年以内の県外最終処分を確かなものに</td><td>方針にとどめず、法律に明記する方向へ（2014年8月に法制化方針、同年11月に法改正）</td></tr>
+      <tr><td>先祖の土地を手放したくない</td><td>全面買い取りだけでなく、所有を残す方式も示された（2014年夏の報道）</td></tr>
+     </table>
+     <p style="margin-top:12px">用地の契約も、全員がしたわけではありません。登記上の地権者2,360人のうち、契約したのは1,911人（2025年7月時点）。売らない、貸さないと決めた人もいます。</p>
+     <p class="src">出典：${srcLink('history')}／${srcLink('land')}／${srcLink('landNews')}</p>
+     <p><b>受け入れた判断</b>は、県全体の土の行き先をつくり、町民の生活再建を前に進めた。<b>受け入れなかった判断</b>は、住民の土地と声を守り、よりよい条件を引き出す力になった。どちらにも理由があり、どちらにも引き受けた重さがあります。</p>`},
+   {t:'話し合ってみよう',h:`<ol style="line-height:2.1;font-size:16px">
+     <li>フェーズ1で「どこに建てるべきか」を話していたとき、あなたは自分の地域を選びましたか。全員が受け入れる側になったとき、何が変わりましたか。</li>
+     <li>あなたが決断したとき、いちばん重く見たのは、誰の、どんな声でしたか。</li>
+     <li>受け入れなかった町長の理由で、あなたが納得できたものはありましたか。</li>
+     <li>施設の土は、2045年3月までに県外で最終処分することが法律で決まっています。そのとき、受け入れを求められるのはどこでしょうか。</li></ol>
+     <p class="note">この振り返りの史実は、上に示した公的資料と本人の証言の要約です。ゲーム内の住民の動き・効果・数値は想定であり、実際の町の世論を再現したものではありません。</p>`}
+  ];
+}
+function renderReflect(){
+  const sl=slides(),k=S.slide,s=sl[k];
+  app.innerHTML=`<div class="card-box"><div class="slide fade" key="${k}"><span class="tagline">振り返り ${k+1}/${sl.length}</span><h2 style="margin-top:8px">${s.t}</h2>${s.h}</div>
+   <div class="slide-nav"><button id="prev" ${k===0?'disabled':''}>← 前へ</button>
+   <span>${sl.map((_,j)=>`<span style="display:inline-block;width:10px;height:10px;border-radius:50%;margin:0 3px;background:${j===k?'#4b3a63':'#d4cde0'}"></span>`).join('')}</span>
+   ${k<sl.length-1?'<button class="primary" id="nxt">次へ →</button>':'<span class="row"><button id="save">記録を保存（JSON）</button><button class="primary" id="again">もう一度遊ぶ</button></span>'}</div></div>`;
+  const q=id=>document.getElementById(id);
+  if(q('prev'))q('prev').onclick=()=>{S.slide--;render();};
+  if(q('nxt'))q('nxt').onclick=()=>{S.slide++;render();};
+  if(q('save'))q('save').onclick=saveJson;
+  if(q('again'))q('again').onclick=()=>{S=null;render();};
+}
+
+document.addEventListener('keydown',e=>{
+  if(S?.phase==='reflect'&&!['TEXTAREA','INPUT'].includes(document.activeElement?.tagName)){
+    if(e.key==='ArrowRight'&&S.slide<slides().length-1){S.slide++;render();}
+    if(e.key==='ArrowLeft'&&S.slide>0){S.slide--;render();}
+  }
+});
+render();
+</script>
+</body>
+</html>

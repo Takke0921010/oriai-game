@@ -1,0 +1,401 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>折り合い v2.0 説明動画</title>
+<style>
+:root{--green:#254d47;--paper:#fffdf7;--beige:#f2f1e9;--purple:#4b3a63;--purple2:#775b98;--pro:#2f7d5b;--mid:#c09a3a;--con:#b0503a;--ink:#233b39}
+*{box-sizing:border-box}
+html,body{margin:0;background:#111}
+body{font-family:'Hiragino Sans','Hiragino Kaku Gothic ProN','Yu Gothic',sans-serif;color:var(--ink)}
+#stage{position:relative;width:1280px;height:720px;overflow:hidden;background:var(--beige)}
+.scene{position:absolute;inset:0;opacity:0;display:none}
+.abs{position:absolute}
+.center{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+#cap{position:absolute;left:0;right:0;bottom:0;height:104px;display:flex;align-items:center;justify-content:center;padding:0 80px;background:linear-gradient(transparent,#0009 30%);color:#fff;font-size:27px;font-weight:700;line-height:1.45;text-align:center;text-shadow:0 2px 6px #000a;z-index:50}
+.hdr{position:absolute;left:0;right:0;top:0;height:64px;display:flex;align-items:center;padding:0 36px;color:#fff;font-size:24px;font-weight:800;gap:18px}
+.chip{background:#fff3;border-radius:20px;padding:4px 16px;font-size:18px}
+.panel{position:absolute;background:var(--paper);border:2px solid #d8ded2;border-radius:16px}
+.cell{position:absolute;width:32px;height:32px;border:2px solid #b6ad98;border-radius:5px;background:#fbf8f1}
+.card{position:absolute;width:104px;height:50px;background:#fff;border:1px solid #c7b9a0;border-left:8px solid var(--c);border-radius:7px;padding:4px 8px;font-size:17px;font-weight:800;box-shadow:0 3px 8px #0002}
+.card small{display:block;font-size:13px;color:#7a5a33;letter-spacing:2px;font-weight:400}
+.bubble{position:absolute;background:#fff;border:2px solid #555;border-radius:14px;padding:8px 14px;font-size:19px;font-weight:700;white-space:nowrap;box-shadow:0 4px 10px #0003}
+.stamp{position:absolute;border:5px solid #c0392b;color:#c0392b;font-size:30px;font-weight:900;padding:2px 14px;border-radius:8px;background:#fffc;letter-spacing:4px}
+.pop{position:absolute;color:#b0503a;font-weight:900;font-size:24px}
+.person{position:absolute;width:76px;text-align:center;font-size:15px;font-weight:700}
+.person .h{width:38px;height:38px;border-radius:50%;margin:0 auto 4px}
+.person .b{width:62px;height:34px;border-radius:30px 30px 6px 6px;margin:0 auto 4px}
+.dice{position:absolute;width:150px;height:150px;border:6px solid #222;border-radius:26px;background:#fff;display:flex;align-items:center;justify-content:center;font-size:84px;font-weight:900}
+.ev{position:absolute;width:340px;height:300px;border-radius:18px;background:#fff;border-top:10px solid var(--purple2);padding:24px;box-shadow:0 8px 24px #0004}
+.ev .turn{font-size:18px;color:#6a5a83;font-weight:700}
+.ev .icon{font-size:72px;margin:14px 0}
+.ev .name{font-size:26px;font-weight:900;line-height:1.35}
+.big{font-size:84px;font-weight:900;letter-spacing:6px}
+.tag{display:inline-block;padding:4px 16px;border-radius:20px;color:#fff;font-weight:800;font-size:22px}
+.flipcard{position:absolute;width:300px;height:330px;perspective:900px}
+.flipcard .in{position:absolute;inset:0;transform-style:preserve-3d}
+.flipcard .f,.flipcard .k{position:absolute;inset:0;border-radius:18px;backface-visibility:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:900}
+.flipcard .f{background:#3a2c50;color:#fff;font-size:34px;border:3px solid #776496}
+.flipcard .k{transform:rotateY(180deg);background:#fff;font-size:40px;border:4px solid currentColor}
+.tl{position:absolute;font-size:21px;line-height:1.5;padding-left:26px}
+.tl::before{content:'';position:absolute;left:0;top:8px;width:14px;height:14px;border-radius:50%;background:var(--purple2)}
+.tl b{color:var(--purple);margin-right:12px}
+.judge{position:absolute;width:470px;border-radius:16px;padding:22px 26px;font-size:22px;line-height:1.6;background:#fff}
+.judge h3{margin:0 0 8px;font-size:28px}
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="scenes"></div>
+  <div id="cap"></div>
+</div>
+<script src="build/timeline.js"></script>
+<script>
+'use strict';
+/* ---------- 共通 ---------- */
+const TL=window.TIMELINE,T={};TL.forEach(x=>T[x.id]=x);
+const TOTAL=TL[TL.length-1].s+TL[TL.length-1].d;
+const clamp=(x,a=0,b=1)=>Math.max(a,Math.min(b,x));
+const ease=x=>x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2;
+const easeOut=x=>1-Math.pow(1-x,3);
+const backOut=x=>{const c1=1.70158,c3=c1+1;return 1+c3*Math.pow(x-1,3)+c1*Math.pow(x-1,2);};
+const P=(t,a,b,f=ease)=>f(clamp((t-a)/(b-a)));
+const lerp=(a,b,p)=>a+(b-a)*p;
+const $=(h)=>{const d=document.createElement('div');d.innerHTML=h.trim();return d.firstElementChild;};
+const TYPES={house:['家',1,'#c98b54'],forest:['森',1,'#5d8a4e'],school:['学校',2,'#d1a83a'],park:['公園',2,'#7aa66a'],field:['畑',2,'#a3804a'],rice:['田んぼ',3,'#8c9b3e']};
+const STANCE={'-1':['反対','#b0503a'],'0':['条件次第','#c09a3a'],'1':['賛成','#2f7d5b']};
+const scenesEl=document.getElementById('scenes'),cap=document.getElementById('cap');
+const VS=[];
+function scene(ids,build,update){
+  const el=document.createElement('div');el.className='scene';scenesEl.appendChild(el);
+  const start=T[ids[0]].s,last=T[ids[ids.length-1]],end=last.s+last.d;
+  const rel=id=>T[id].s-start;
+  const ctx={el,rel,D:end-start};build(ctx);
+  VS.push({start,end,ids,ctx,update});
+}
+function setStyle(e,o){for(const k in o)e.style[k]=o[k];}
+
+/* ---------- 1 タイトル ---------- */
+scene(['title'],c=>{
+  c.el.style.background='linear-gradient(160deg,#254d47,#1b3632)';
+  c.el.innerHTML=`<div class="abs center" style="inset:0;color:#fff">
+    <div id="t1" style="font-size:30px;letter-spacing:8px;opacity:.85">福島の除去土壌をめぐる3人のゲーム</div>
+    <div id="t2" class="big" style="font-size:150px;margin:18px 0">折り合い</div>
+    <div id="t3" style="font-size:28px;background:#fff2;padding:6px 26px;border-radius:30px">v2.0　ゲームの流れ</div></div>`;
+},(c,t)=>{
+  const q=id=>c.el.querySelector('#'+id);
+  setStyle(q('t1'),{opacity:P(t,.2,1.2)*.85,transform:`translateY(${lerp(20,0,P(t,.2,1.2))}px)`});
+  setStyle(q('t2'),{opacity:P(t,.5,1.6),transform:`scale(${lerp(.85,1,P(t,.5,1.6,easeOut))})`});
+  setStyle(q('t3'),{opacity:P(t,1.4,2.2)});
+});
+
+/* ---------- 2 役割 ---------- */
+const MAYORS=[['A','原発に近く、避難が続く町','#2f705d'],['B','田畑の広がる町','#5f7d3a'],['C','人が暮らし続けた町','#3d6f8a']];
+function mayorIcon(color,size=1){return `<svg width="${110*size}" height="${110*size}" viewBox="0 0 110 110"><circle cx="55" cy="36" r="22" fill="${color}"/><path d="M15 104 Q15 64 55 64 Q95 64 95 104 Z" fill="${color}"/><rect x="47" y="64" width="16" height="22" fill="#fff" opacity=".85"/></svg>`;}
+scene(['roles'],c=>{
+  c.el.innerHTML=`<div class="abs" style="left:0;right:0;top:70px;text-align:center;font-size:40px;font-weight:900">あなたは、町長です</div>`+
+  MAYORS.map((m,i)=>`<div class="panel center rc" style="left:${80+i*390}px;top:170px;width:340px;height:340px;border-color:${m[2]}">
+     ${mayorIcon(m[2],1.2)}<div style="font-size:40px;font-weight:900;margin:8px 0;color:${m[2]}">地域${m[0]}</div><div style="font-size:23px;font-weight:700">${m[1]}</div></div>`).join('');
+},(c,t)=>{
+  c.el.querySelectorAll('.rc').forEach((e,i)=>{const p=P(t,.6+i*1.9,1.4+i*1.9,backOut);setStyle(e,{opacity:clamp(p),transform:`translateY(${lerp(60,0,p)}px)`});});
+});
+
+/* ---------- 3 フェーズ1タイトル ---------- */
+function phaseTitle(id,bg,label,name,sub){
+  scene([id],c=>{
+    c.el.style.background=bg;
+    c.el.innerHTML=`<div class="abs center" style="inset:0;color:#fff"><div class="pl" style="font-size:36px;letter-spacing:10px;opacity:.85">${label}</div><div class="pn big" style="margin-top:10px">${name}</div>${sub?`<div class="ps" style="font-size:26px;margin-top:20px;opacity:.85">${sub}</div>`:''}</div>`;
+  },(c,t)=>{
+    setStyle(c.el.querySelector('.pl'),{opacity:P(t,.1,.7)*.85,transform:`translateY(${lerp(-20,0,P(t,.1,.7))}px)`});
+    setStyle(c.el.querySelector('.pn'),{opacity:P(t,.4,1.1),letterSpacing:lerp(30,6,P(t,.4,1.4))+'px'});
+    const s=c.el.querySelector('.ps');if(s)s.style.opacity=P(t,1.2,1.9)*.85;
+  });
+}
+phaseTitle('p1title','linear-gradient(160deg,#2f705d,#254d47)','フェーズ1','土の行き先','');
+
+/* ---------- 4 盤面（土・頼む・庭先・満杯） ---------- */
+const CAP=[9,11,5];
+const colX=r=>50+r*400;
+const gridPos=(r,i)=>[colX(r)+24+(i%9)*38,232+Math.floor(i/9)*38];
+const yardPos=(r,s)=>[colX(r)+24+s*114,410+(s>2?60:0)];
+scene(['soil','trade','yard','full'],c=>{
+  const {el,rel}=c;
+  const a=rel('trade'),b=rel('yard'),f=rel('full');
+  c.k={a,b,f};
+  let h=`<div class="hdr" style="background:var(--green)">フェーズ1　土の行き先<span class="chip" id="rnd">R1</span></div>`;
+  for(let r=0;r<3;r++){
+    h+=`<div class="panel" style="left:${colX(r)}px;top:88px;width:380px;height:500px">
+      <div style="position:absolute;left:24px;top:14px;font-size:30px;font-weight:900;color:${MAYORS[r][2]}">地域${MAYORS[r][0]}</div>
+      <div style="position:absolute;right:22px;top:22px;font-size:17px" ><span id="tok${r}">トークン 5</span>　<span id="anx${r}">不安 0</span></div>
+      <div style="position:absolute;left:24px;top:110px;font-size:17px;color:#6a5a43;font-weight:700">仮置場 <span id="cnt${r}"></span></div>
+      <div style="position:absolute;left:24px;top:284px;font-size:17px;color:#6a5a43;font-weight:700">庭先（現場保管）</div></div>`;
+    for(let i=0;i<CAP[r];i++){const [x,y]=gridPos(r,i);h+=`<div class="cell" id="c${r}_${i}" style="left:${x}px;top:${y}px"></div>`;}
+    h+=`<div class="stamp" id="st${r}" style="left:${colX(r)+120}px;top:236px">満杯</div>`;
+    h+=`<div class="pop" id="pop${r}" style="left:${colX(r)+250}px;top:380px">不安 +1</div>`;
+  }
+  h+=`<div class="bubble" id="bq1"></div><div class="bubble" id="bq2"></div><div class="bubble" id="bq3"></div><div class="bubble" id="bq4"></div>
+      <svg class="abs" id="arr" style="left:0;top:0" width="1280" height="720"><defs><marker id="ah" markerWidth="10" markerHeight="10" refX="6" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#ac672b"/></marker></defs>
+      <path id="ar1" d="" stroke="#ac672b" stroke-width="5" fill="none" marker-end="url(#ah)" stroke-dasharray="10 8"/>
+      <path id="ar2" d="" stroke="#ac672b" stroke-width="5" fill="none" marker-end="url(#ah)" stroke-dasharray="10 8"/></svg>
+      <div class="abs" id="tokfly" style="width:40px;height:40px;border-radius:50%;background:#e2b74a;border:3px solid #9a7417;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:20px">1</div>
+      <div class="abs center" id="nomore" style="left:0;right:0;top:300px;height:110px;background:#c0392bee;color:#fff;font-size:46px;font-weight:900;letter-spacing:6px">もう、置く場所がない</div>`;
+  el.innerHTML=h;
+  // 札の動き：[種類, キーフレーム[[t,x,y,不透明度]]]
+  const yd=(r,s,t0)=>{const [x,y]=yardPos(r,s);return [[t0,x,y-160,0],[t0+.6,x,y,1]];};
+  const toGrid=(r,i,t0)=>{const [x,y]=gridPos(r,i);return [[t0,x-30,y-8,1],[t0+.15,x-30,y-8,0]];};
+  c.cards=[
+    ['house',[...yd(0,0,.5),[2.6,...yardPos(0,0),1],...toGrid(0,0,3.4)]],
+    ['rice',[...yd(1,0,.7),[2.8,...yardPos(1,0),1],...toGrid(1,0,3.6)]],
+    ['school',[...yd(2,0,.9),[3.0,...yardPos(2,0),1],...toGrid(2,0,3.8)]],
+    // 頼む：Cの公園
+    ['park',[...yd(2,0,a+.5),[a+5.0,...yardPos(2,0),1],[a+6.1,...gridPos(1,6).map((v,k)=>v-(k?8:30)),1],[a+6.25,...gridPos(1,6).map((v,k)=>v-(k?8:30)),0]]],
+    // 庭先
+    ['rice',[...yd(0,0,b+.4)]],
+    ['field',[...yd(1,0,b+.6),[b+1.6,...yardPos(1,0),1],...toGrid(1,9,b+2.3)]],
+    ['house',[...yd(2,0,b+.8)]],
+    // 満杯の後もたまる
+    ['forest',[...yd(0,1,f+.3)]],['house',[...yd(1,0,f+.5)]],['school',[...yd(2,1,f+.7)]]
+  ];
+  c.cards.forEach((cd,k)=>{const [n,s,col]=TYPES[cd[0]];const e=$(`<div class="card" style="--c:${col}">${n}<small>${'●'.repeat(s)}</small></div>`);e.id='card'+k;el.appendChild(e);cd.el=e;});
+  c.fill=[[[0,0],[3.55,1],[a,3],[b,7],[f+.2,9]],[[0,0],[3.75,3],[a,5],[a+6.2,7],[b,9],[b+2.45,11]],[[0,0],[3.95,2],[a,4],[b,5]]];
+  c.cellColor=[['#c98b54','#5d8a4e','#c98b54','#d1a83a','#d1a83a','#c98b54','#8c9b3e','#8c9b3e','#c98b54'],
+               ['#8c9b3e','#8c9b3e','#8c9b3e','#a3804a','#a3804a','#c98b54','#7aa66a','#7aa66a','#c98b54','#a3804a','#a3804a'],
+               ['#d1a83a','#d1a83a','#c98b54','#7aa66a','#c98b54']];
+},(c,t)=>{
+  const {el,k:{a,b,f}}=c,q=id=>el.querySelector('#'+id);
+  q('rnd').textContent=t<a?'R1':t<b?'R2':t<f?'R3':'R4';
+  for(let r=0;r<3;r++){
+    let v=0;for(const [tt,val] of c.fill[r])if(t>=tt)v=val;
+    for(let i=0;i<CAP[r];i++){const e=q(`c${r}_${i}`);e.style.background=i<v?c.cellColor[r][i]:'#fbf8f1';e.style.borderColor=i<v?'#6e5a3c':'#b6ad98';}
+    q('cnt'+r).textContent=`${v}/${CAP[r]}マス`;
+    const sp=P(t,f+1.0+r*.35,f+1.5+r*.35,backOut);
+    setStyle(q('st'+r),{opacity:clamp(sp),transform:`rotate(-8deg) scale(${lerp(2.2,1,clamp(sp))})`});
+    const anx=(r===0||r===2)&&t>b+3.0?1:0;q('anx'+r).textContent=`不安 ${anx+((r!==1)&&t>f+3?1:0)}`;
+    const pp=(r!==1)?P(t,b+3.0,b+3.6):0, po=P(t,b+4.3,b+4.8);
+    setStyle(q('pop'+r),{opacity:pp*(1-po),transform:`translateY(${lerp(20,-10,pp)}px)`});
+  }
+  q('tok1').textContent=`トークン ${t>a+6.4?6:5}`;q('tok2').textContent=`トークン ${t>a+6.4?4:5}`;
+  // 札
+  for(const cd of c.cards){
+    const kf=cd[1];let x=kf[0][1],y=kf[0][2],o=0;
+    if(t<kf[0][0]){o=0;}
+    else{o=kf[kf.length-1][3];x=kf[kf.length-1][1];y=kf[kf.length-1][2];
+      for(let i=0;i<kf.length-1;i++){if(t>=kf[i][0]&&t<kf[i+1][0]){const p=P(t,kf[i][0],kf[i+1][0]);x=lerp(kf[i][1],kf[i+1][1],p);y=lerp(kf[i][2],kf[i+1][2],p);o=lerp(kf[i][3],kf[i+1][3],p);break;}}}
+    setStyle(cd.el,{left:x+'px',top:y+'px',opacity:o});
+  }
+  // 頼む場面
+  const bub=(id,text,x,y,t0,t1,color)=>{const e=q(id);e.textContent=text;const p=P(t,t0,t0+.35,backOut),o=1-P(t,t1,t1+.3);setStyle(e,{left:x+'px',top:y+'px',opacity:clamp(p)*o,transform:`scale(${clamp(p)})`,borderColor:color||'#555',color:color||'#233b39'});};
+  bub('bq1','空きが足りない。引き受けてくれない？（トークン1）',560,520,a+1.4,a+3.6);
+  bub('bq2','✕　うちも余裕がない',110,180,a+2.6,a+3.7,'#b0503a');
+  bub('bq3','Bさん、お願いできる？（トークン1）',700,520,a+3.8,a+6.4);
+  bub('bq4','○　引き受ける',540,180,a+4.5,a+6.6,'#2f7d5b');
+  const arrow=(id,x1,y1,x2,y2,t0,t1)=>{const e=q(id);const p=P(t,t0,t0+.5),o=1-P(t,t1,t1+.3);e.setAttribute('d',`M${x1},${y1} Q${(x1+x2)/2},${Math.min(y1,y2)-120} ${lerp(x1,x2,p)},${lerp(y1,y2,p)}`);e.style.opacity=(p>0?1:0)*o;e.style.strokeDashoffset=-t*30;};
+  arrow('ar1',990,400,330,330,a+1.4,a+3.6);
+  arrow('ar2',990,400,700,330,a+3.8,a+6.4);
+  const tp=P(t,a+5.4,a+6.4);setStyle(q('tokfly'),{left:lerp(1180,780,tp)+'px',top:lerp(130,130,tp)-Math.sin(tp*Math.PI)*60+'px',opacity:t>a+5.4&&t<a+6.6?1:0});
+  const np=P(t,f+2.6,f+3.2,easeOut);setStyle(q('nomore'),{opacity:np,transform:`scaleX(${lerp(.6,1,np)})`});
+});
+
+/* ---------- 5 どんでん返し（指名→知らせ→引き→施設→全員受け入れ側） ---------- */
+const CL={A:[160,0],B:[-100,-130],C:[-100,130]};
+const OTH={D:[690,190],E:[470,170],F:[250,250],G:[330,420],H:[560,520],I:[170,500],J:[560,340],K:[830,160],L:[790,530]};
+const FX=865,FY=360; // 施設の中心（引いた後）
+scene(['nominate','notice','zoom','facility','flip'],c=>{
+  const {el,rel}=c;c.k={n1:rel('notice'),n2:rel('zoom'),n3:rel('facility'),n4:rel('flip')};
+  let s=`<svg class="abs" width="1280" height="720" style="left:0;top:0" font-family="Hiragino Sans">
+   <defs><marker id="ah2" markerUnits="userSpaceOnUse" markerWidth="34" markerHeight="34" refX="20" refY="17" orient="auto"><path d="M0,0 L34,17 L0,34 z" fill="#ac672b"/></marker>
+   <marker id="ah3" markerWidth="10" markerHeight="10" refX="6" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#775b98"/></marker></defs>
+   <g id="pref"><rect x="110" y="100" width="880" height="490" rx="60" fill="#eef0e6" stroke="#9fac9a" stroke-width="4"/>
+     <rect x="990" y="70" width="300" height="560" fill="#d7e6ee"/><text x="1120" y="380" font-size="30" fill="#476a7b" font-weight="700">海</text>
+     <circle cx="1010" cy="292" r="12" fill="#444"/><text x="1010" y="272" font-size="16" text-anchor="middle" fill="#444" font-weight="700">原発</text></g>
+   <g id="flows">${Object.entries(OTH).map(([k,[x,y]])=>`<path data-k="${k}" d="M${x},${y} L${FX},${FY}" stroke="#775b98" stroke-width="4" stroke-dasharray="8 8" fill="none" marker-end="url(#ah3)"/>`).join('')}</g>
+   <ellipse id="fac" cx="${FX}" cy="${FY}" rx="112" ry="132" fill="#775b98" fill-opacity=".38" stroke="#4b3a63" stroke-width="6" stroke-dasharray="14 8"/>
+   <g id="others">${Object.entries(OTH).map(([k,[x,y]])=>`<g data-k="${k}"><circle cx="${x}" cy="${y}" r="38" fill="#9a8f84" stroke="#fff" stroke-width="4"/><text x="${x}" y="${y+12}" font-size="32" text-anchor="middle" fill="#fff" font-weight="900">${k}</text>
+      <rect x="${x-52}" y="${y+46}" width="104" height="28" rx="6" fill="#c0392b"/><text x="${x}" y="${y+66}" font-size="17" text-anchor="middle" fill="#fff" font-weight="800">仮置場 満杯</text></g>`).join('')}</g>
+   <g id="cluster">
+     <g id="noms" stroke="#ac672b" stroke-width="10" fill="none" stroke-linecap="round">
+       <path d="M86,-53 L-5,-98" marker-end="url(#ah2)"/>
+       <path d="M-17,-72 L74,-27" marker-end="url(#ah2)"/>
+       <path d="M-190,80 Q-260,0 -190,-80" marker-end="url(#ah2)"/></g>
+     ${Object.entries(CL).map(([k,[x,y]],i)=>`<g><circle cx="${x}" cy="${y}" r="84" fill="${MAYORS[i][2]}" stroke="#fff" stroke-width="6"/><text x="${x}" y="${y+26}" font-size="76" text-anchor="middle" fill="#fff" font-weight="900">${k}</text></g>`).join('')}
+   </g>
+   <g id="badges">${Object.entries(CL).map(([k],i)=>`<g data-i="${i}"><rect rx="18" width="200" height="40" fill="#4b3a63"/><text x="100" y="28" font-size="21" text-anchor="middle" fill="#fff" font-weight="800">${k}も 受け入れる側</text></g>`).join('')}</g>
+  </svg>
+  <div class="abs" id="q1" style="left:0;right:0;top:40px;text-align:center;font-size:40px;font-weight:900">中間貯蔵施設を、どこに建てる？</div>
+  <div class="bubble" id="nb0" style="font-size:24px">A：「Bがいい。土地が広いから」</div><div class="bubble" id="nb1" style="font-size:24px">B：「Aがいい。原発に近いから」</div><div class="bubble" id="nb2" style="font-size:24px">C：「Bがいいのでは」</div>
+  <div class="abs" id="dark" style="inset:0;background:#0d0a14"></div>
+  <div class="abs center" id="letter" style="left:390px;top:200px;width:500px;height:260px;background:#fffdf7;border-radius:12px;border-top:14px solid #4b3a63;box-shadow:0 20px 60px #000">
+    <div style="font-size:24px;color:#6a5a83;font-weight:700">国からの知らせ</div><div style="font-size:64px;margin-top:10px">✉</div></div>
+  <div class="abs" id="zcap" style="left:60px;top:28px;font-size:34px;font-weight:900;color:#3d2a55">除染していたのは、A・B・Cだけではなかった</div>
+  <div class="abs center" id="fcap" style="left:140px;top:22px;width:760px;height:76px;background:#4b3a63;color:#fff;border-radius:14px;font-size:34px;font-weight:900">施設は、A・B・Cにまたがって建てる</div>
+  <div class="abs center" id="flipcap" style="left:0;right:0;top:0;height:150px;background:#2c2440ee;color:#fff"><div style="font-size:30px;opacity:.8">押しつけ合っていた3人は</div><div style="font-size:64px;font-weight:900;letter-spacing:4px">全員が「受け入れる側」に。</div></div>`;
+  el.innerHTML=s;
+},(c,t)=>{
+  const {el,k:{n1,n2,n3,n4}}=c,q=id=>el.querySelector('#'+id);
+  // 段階1 指名（拡大した3地域）
+  const z=P(t,n2+.2,n2+3.2);
+  const cx=lerp(640,FX+13*.42,z),cy=lerp(400,FY,z),sc=lerp(1.25,.42,z);
+  q('cluster').setAttribute('transform',`translate(${cx},${cy}) scale(${sc})`);
+  const nomIn=P(t,1.0,2.2),nomOut=P(t,n1,n1+.5);
+  q('noms').style.opacity=nomIn*(1-nomOut);
+  [[770,515],[90,190],[90,500]].forEach((p,i)=>{const e=q('nb'+i);const pp=P(t,2.4+i*1.6,2.8+i*1.6,backOut);
+    setStyle(e,{left:p[0]+'px',top:p[1]+'px',opacity:clamp(pp)*(1-nomOut),transform:`scale(${clamp(pp)})`});});
+  q('q1').style.opacity=P(t,.2,.8)*(1-nomOut);
+  // 段階2 知らせ
+  const dk=P(t,n1,n1+.8)*(1-P(t,n2-.3,n2+.4));q('dark').style.opacity=dk*.9;
+  const lp=P(t,n1+.6,n1+1.3,backOut),lo=1-P(t,n2-.3,n2+.2);
+  setStyle(q('letter'),{opacity:clamp(lp)*lo,transform:`translateY(${lerp(-80,0,clamp(lp))}px) scale(${lerp(.8,1,clamp(lp))})`});
+  // 段階3 引き：県全体と他地域
+  q('pref').style.opacity=P(t,n2+.4,n2+2.2);
+  const dim=1-.65*P(t,n4,n4+.8);
+  el.querySelectorAll('#others>g').forEach((g,i)=>{const p=P(t,n2+2.6+i*.55,n2+3.0+i*.55,backOut);g.style.opacity=clamp(p)*dim;g.style.transformOrigin=`${OTH[g.dataset.k][0]}px ${OTH[g.dataset.k][1]}px`;g.style.transform=`scale(${clamp(p)})`;});
+  q('zcap').style.opacity=P(t,n2+1.4,n2+2.2)*(1-P(t,n3,n3+.4));
+  // 段階4 施設
+  const fp=P(t,n3+.3,n3+1.8,backOut);const fac=q('fac');fac.style.opacity=clamp(fp);fac.style.transformOrigin=`${FX}px ${FY}px`;fac.style.transform=`scale(${clamp(fp)})`;
+  el.querySelectorAll('#flows path').forEach((p,i)=>{const o=P(t,n3+2.0+i*.15,n3+2.6+i*.15);p.style.opacity=o*.85*dim;p.style.strokeDashoffset=-(t*40);});
+  const fc=P(t,n3+1.0,n3+1.6);q('fcap').style.opacity=fc*(1-P(t,n4+.2,n4+.6));
+  // 段階5 全員受け入れ側
+  el.querySelectorAll('#badges>g').forEach((g,i)=>{const [x,y]=[[945,400],[590,275],[590,425]][i];
+    const p=P(t,n4+.3+i*.45,n4+.7+i*.45,backOut);g.setAttribute('transform',`translate(${x},${y}) scale(${clamp(p)})`);g.style.opacity=clamp(p);});
+  const fl=P(t,n4+1.8,n4+2.4);q('flipcap').style.opacity=fl;q('flipcap').style.transform=`scaleY(${lerp(.3,1,fl)})`;
+});
+
+/* ---------- 6 フェーズ2タイトル ---------- */
+phaseTitle('p2title','linear-gradient(160deg,#4b3a63,#2c2440)','フェーズ2','受け入れの問い','町長として、施設を受け入れるか');
+
+/* ---------- 7 3つの出来事 ---------- */
+const EVS=[['ターン1','🎤','政府の説明会'],['ターン2','📄','政府から<br>土地の買い取りの提案'],['ターン3','⏳','時間の経過と<br>住民からの決断の要請']];
+scene(['events'],c=>{
+  c.el.style.background='#efeaf5';
+  c.el.innerHTML=`<div class="hdr" style="background:var(--purple)">フェーズ2　受け入れの問い<span class="chip">3ターン</span></div>`+
+   EVS.map((e,i)=>`<div class="ev center" style="left:${70+i*390}px;top:140px"><div class="turn">${e[0]}</div><div class="icon">${e[1]}</div><div class="name">${e[2]}</div></div>`).join('')+
+   `<svg class="abs" style="left:0;top:0" width="1280" height="720">${[0,1].map(i=>`<path class="evarr" d="M${415+i*390},290 L${455+i*390},290" stroke="#775b98" stroke-width="6" marker-end="url(#ah4)"/>`).join('')}
+    <defs><marker id="ah4" markerWidth="10" markerHeight="10" refX="5" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#775b98"/></marker></defs></svg>`;
+},(c,t)=>{
+  const ks=[.6,2.6,4.8];
+  c.el.querySelectorAll('.ev').forEach((e,i)=>{const p=P(t,ks[i],ks[i]+.6,backOut);setStyle(e,{opacity:clamp(p),transform:`translateY(${lerp(80,0,clamp(p))}px) rotate(${lerp(-6,0,clamp(p))}deg)`});});
+  c.el.querySelectorAll('.evarr').forEach((e,i)=>e.style.opacity=P(t,ks[i+1]-.2,ks[i+1]+.2));
+});
+
+/* ---------- 8 サイコロと住民 ---------- */
+const RES=[[-1,-1,-1,0,0,1],[-1,-1,-1,-1,0,1],[-1,-1,-1,0,1,1],[-1,-1,-1,0,0,1]];
+const ROLLS=[{t:.9,face:2,tier:['否定的','#c9744e'],turn:'ターン1　政府の説明会',voice:'「30年後に本当に県外へ運ぶ保証はあるのか」',changed:[3]},
+             {t:5.0,face:6,tier:['強く肯定的','#2f7d5b'],turn:'ターン2　土地の買い取りの提案',voice:'「売らずに貸す形も選べるなら、考えてもいい」',changed:[3,4]},
+             {t:9.0,face:3,tier:['否定的','#c9744e'],turn:'ターン3　時間の経過',voice:'「町が受け入れたら、もう二度と戻れない気がする」',changed:[4]}];
+scene(['dice'],c=>{
+  c.el.style.background='#efeaf5';
+  c.el.innerHTML=`<div class="hdr" style="background:var(--purple)">フェーズ2　受け入れの問い<span class="chip" id="dturn">ターン1</span></div>
+   <div class="abs" style="left:70px;top:100px;font-size:28px;font-weight:900">地域Aの町長</div>
+   <div class="dice" id="die" style="left:90px;top:160px">1</div>
+   <div class="abs" id="tier" style="left:70px;top:340px"></div>
+   <div class="panel" style="left:340px;top:100px;width:880px;height:330px;background:#fff">
+     <div style="position:absolute;left:30px;top:20px;font-size:26px;font-weight:900">地域Aの住民</div>
+     <div style="position:absolute;right:30px;top:26px;font-size:18px">${['1','0','-1'].map(k=>`<span style="margin-left:14px"><span style="display:inline-block;width:16px;height:16px;border-radius:50%;background:${STANCE[k][1]};vertical-align:-2px;margin-right:4px"></span>${STANCE[k][0]}</span>`).join('')}</div>
+     ${[0,1,2,3,4,5].map(i=>`<div class="person" id="p${i}" style="left:${70+i*130}px;top:110px"><div class="h"></div><div class="b"></div><span></span></div>`).join('')}
+   </div>
+   <div class="abs" id="voice" style="left:340px;top:452px;width:880px;padding:16px 22px;background:#fff;border-radius:12px;border-left:10px solid #999;font-size:26px;font-weight:800"></div>`;
+},(c,t)=>{
+  const q=id=>c.el.querySelector('#'+id);
+  let cur=-1;ROLLS.forEach((r,i)=>{if(t>=r.t)cur=i;});
+  const r=cur>=0?ROLLS[cur]:null;
+  q('dturn').textContent=r?r.turn:'ターン1　政府の説明会';
+  const die=q('die');
+  if(r&&t<r.t+1.4){const k=Math.floor(t*12);die.textContent=1+((k*7+3)%6);die.style.transform=`rotate(${Math.sin(t*40)*14}deg)`;}
+  else{die.textContent=r?r.face:'?';die.style.transform='none';}
+  const landed=r&&t>=r.t+1.4;
+  q('tier').innerHTML=landed?`<span class="tag" style="background:${r.tier[1]}">${r.tier[0]}</span>`:'';
+  q('tier').style.opacity=landed?P(t,r.t+1.4,r.t+1.8):0;
+  const stIdx=landed?cur+1:Math.max(0,cur);
+  const st=RES[stIdx];
+  st.forEach((v,i)=>{const e=q('p'+i);const col=STANCE[v][1];e.querySelector('.h').style.background=col;e.querySelector('.b').style.background=col;e.querySelector('span').textContent=STANCE[v][0];
+    const pulse=landed&&r.changed.includes(i)?Math.sin(clamp((t-r.t-1.4)/1.0)*Math.PI)*.25:0;e.style.transform=`scale(${1+pulse})`;});
+  const v=q('voice');v.textContent=landed?r.voice:'';v.style.opacity=landed?P(t,r.t+1.8,r.t+2.3):0;v.style.borderLeftColor=landed?r.tier[1]:'#999';
+});
+
+/* ---------- 9 決断 ---------- */
+const CALLS=[[90,120,'町長、決めてほしい'],[860,110,'いつまで待てばいい？'],[160,430,'どちらでもいい、次に進みたい'],[820,420,'急がないでほしい'],[480,250,'町長が決めてください']];
+scene(['decide'],c=>{
+  c.el.style.background='#efeaf5';
+  c.el.innerHTML=CALLS.map((b,i)=>`<div class="bubble cl" style="left:${b[0]}px;top:${b[1]}px;font-size:26px">${b[2]}</div>`).join('')+
+  `<div class="abs center" id="cover" style="inset:0;background:#2c2440;color:#fff"><div style="font-size:44px;font-weight:900">地域Aの町長だけが<br>画面を見てください</div><div style="font-size:24px;margin-top:16px;opacity:.8">ほかの人には見せずに決める</div></div>
+   <div class="abs" id="dpanel" style="inset:0;background:#fffdf7">
+    <div class="abs" style="left:0;right:0;top:110px;text-align:center;font-size:40px;font-weight:900">町として、施設を受け入れますか</div>
+    <div class="abs center" id="bA" style="left:150px;top:250px;width:450px;height:180px;border:4px solid #7c9791;border-radius:18px;font-size:46px;font-weight:900;background:#fff">受け入れる</div>
+    <div class="abs center" id="bR" style="left:680px;top:250px;width:450px;height:180px;border:4px solid #7c9791;border-radius:18px;font-size:46px;font-weight:900;background:#fff">受け入れない</div>
+    <div class="abs" id="hand" style="font-size:64px">👆</div></div>`;
+},(c,t)=>{
+  const q=id=>c.el.querySelector('#'+id);
+  c.el.querySelectorAll('.cl').forEach((e,i)=>{const p=P(t,.6+i*.55,1.0+i*.55,backOut);setStyle(e,{opacity:clamp(p),transform:`scale(${clamp(p)})`});});
+  const cv=P(t,4.0,4.6)*(1-P(t,6.2,6.6));setStyle(q('cover'),{opacity:cv});
+  const dp=P(t,6.2,6.6);q('dpanel').style.opacity=dp;
+  // 迷う手
+  const sw=(Math.sin((t-6.6)*1.6)+1)/2;const hx=lerp(330,860,ease(sw));q('hand').style.left=hx+'px';q('hand').style.top=(400+Math.sin(t*3)*6)+'px';q('hand').style.opacity=P(t,6.6,7.0);
+  const onA=hx<600;q('bA').style.background=dp&&onA&&t>6.6?'#fff0d8':'#fff';q('bR').style.background=dp&&!onA&&t>6.6?'#fff0d8':'#fff';
+});
+
+/* ---------- 10 同時に明かす ---------- */
+const DEC=[['A','受け入れる','#2f7d5b'],['B','受け入れない','#b0503a'],['C','受け入れる','#2f7d5b']];
+scene(['result'],c=>{
+  c.el.style.background='#2c2440';
+  c.el.innerHTML=`<div class="abs" style="left:0;right:0;top:60px;text-align:center;color:#fff;font-size:38px;font-weight:900">3人の決断を、同時に</div>`+
+  DEC.map((d,i)=>`<div class="flipcard" style="left:${110+i*370}px;top:150px"><div class="in"><div class="f">地域${d[0]}<div style="font-size:70px;margin-top:10px">?</div></div><div class="k" style="color:${d[2]}"><div style="font-size:30px;color:#233b39">地域${d[0]}</div>${d[1]}</div></div></div>`).join('')+
+  `<div class="abs" id="nw" style="left:0;right:0;top:520px;text-align:center;color:#fff;font-size:34px;font-weight:900">勝ち負けはありません。正解もありません。</div>`;
+},(c,t)=>{
+  c.el.querySelectorAll('.flipcard .in').forEach((e,i)=>{const p=P(t,1.0+i*.25,1.8+i*.25);e.style.transform=`rotateY(${p*180}deg)`;});
+  c.el.querySelector('#nw').style.opacity=P(t,3.4,4.0);
+});
+
+/* ---------- 11 振り返り ---------- */
+const TLINE=[['2013年12月','国が3つの町に設置を求める'],['2014年3月','県の申し入れで、2つの町に集約'],['2014年5〜6月','県内外で16回の住民説明会'],['2014年9月','県知事が建設を容認'],['2015年1月','大熊町・双葉町が建設受け入れ'],['2015年3月','土の運び込みが始まる']];
+scene(['reflect'],c=>{
+  c.el.style.background='#f6f3fa';
+  c.el.innerHTML=`<div class="hdr" style="background:var(--purple)">振り返り　実際の大熊町・双葉町では</div>
+   <div class="abs" style="left:60px;top:96px;width:540px;height:440px;background:#fff;border-radius:16px;border-left:8px solid var(--purple2)"></div>`+
+   TLINE.map((x,i)=>`<div class="tl" style="left:90px;top:${120+i*66}px"><b>${x[0]}</b><br>${x[1]}</div>`).join('')+
+   `<div class="judge" id="j1" style="left:650px;top:96px;border-left:10px solid #2f7d5b"><h3 style="color:#2f7d5b">受け入れた判断</h3>県全体の土の行き先をつくり、住民の生活再建を前に進めた</div>
+    <div class="judge" id="j2" style="left:650px;top:296px;border-left:10px solid #b0503a"><h3 style="color:#b0503a">受け入れなかった判断</h3>土地と住民の声を守り、よりよい条件を引き出す力になった</div>
+    <div class="abs center" id="both" style="left:640px;top:490px;width:490px;height:66px;background:#4b3a63;color:#fff;border-radius:12px;font-size:30px;font-weight:900">どちらも、間違いではない</div>`;
+},(c,t)=>{
+  c.el.querySelectorAll('.tl').forEach((e,i)=>{const p=P(t,.6+i*.7,1.0+i*.7);setStyle(e,{opacity:p,transform:`translateX(${lerp(-20,0,p)}px)`});});
+  ['j1','j2'].forEach((id,i)=>{const p=P(t,6.2+i*1.2,6.8+i*1.2,backOut);setStyle(c.el.querySelector('#'+id),{opacity:clamp(p),transform:`translateX(${lerp(40,0,clamp(p))}px)`});});
+  const b=P(t,9.0,9.6,backOut);setStyle(c.el.querySelector('#both'),{opacity:clamp(b),transform:`scale(${lerp(.6,1,clamp(b))})`});
+});
+
+/* ---------- 12 終わり ---------- */
+scene(['end'],c=>{
+  c.el.style.background='linear-gradient(160deg,#254d47 0%,#254d47 48%,#4b3a63 52%,#2c2440 100%)';
+  c.el.innerHTML=`<div class="abs center" style="inset:0;color:#fff">
+   <div class="big" id="e1" style="font-size:130px">折り合い</div>
+   <div id="e2" style="font-size:30px;margin-top:20px;font-weight:700">フェーズ1　土の行き先　→　フェーズ2　受け入れの問い</div>
+   <div id="e3" style="font-size:26px;margin-top:26px;background:#fff2;padding:8px 26px;border-radius:30px">3人用・ブラウザで遊べる試作 v2.0</div></div>`;
+},(c,t)=>{
+  const q=id=>c.el.querySelector('#'+id);
+  q('e1').style.opacity=P(t,.2,1.0);q('e2').style.opacity=P(t,.8,1.6);q('e3').style.opacity=P(t,1.4,2.2);
+});
+
+/* ---------- 時刻を指定して描く ---------- */
+function seek(t){
+  for(const v of VS){
+    const on=t>=v.start&&t<v.end;
+    v.ctx.el.style.display=on?'block':'none';
+    if(!on)continue;
+    const lt=t-v.start,D=v.end-v.start;
+    v.ctx.el.style.opacity=Math.min(P(lt,0,.4,x=>x),1-P(lt,D-.4,D,x=>x));
+    v.update(v.ctx,lt);
+  }
+  // 字幕：文ごとに文字数で時間を割る
+  let seg=TL.find(s=>t>=s.s&&t<s.s+s.d);let txt='';
+  if(seg){const parts=seg.sub.split(/(?<=。)/).filter(Boolean);const tot=parts.reduce((a,p)=>a+p.length,0);
+    let acc=seg.s+seg.lead;const span=seg.audio;
+    for(const p of parts){const d=span*p.length/tot;if(t<acc+d+.15||p===parts[parts.length-1]){txt=p;break;}acc+=d;}
+    if(t<seg.s+seg.lead-.1)txt='';
+  }
+  cap.textContent=txt;cap.style.opacity=txt?1:0;
+}
+window.seek=seek;window.TOTAL=TOTAL;
+if(!location.search.includes('render')){
+  const t0=performance.now();const loop=()=>{const t=(performance.now()-t0)/1000;seek(t%TOTAL);requestAnimationFrame(loop);};loop();
+}else seek(0);
+</script>
+</body>
+</html>
