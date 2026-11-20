@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>折り合い 地図ボード 試し刷り</title>
+<style id="pagestyle"></style>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{font-family:'Hiragino Sans','Hiragino Kaku Gothic ProN','Yu Gothic',sans-serif;color:#233b39;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.page{position:relative;overflow:hidden;page-break-after:always;break-after:page}
+.page:last-child{page-break-after:auto;break-after:auto}
+.half{position:absolute;top:0;width:297mm;height:420mm;overflow:hidden}
+.abs{position:absolute}
+/* 表・右 */
+.area{position:absolute;left:12mm;width:256mm;border:0.6mm solid;border-radius:3mm;background:#f7f4ea}
+.area .h{position:absolute;left:4mm;top:3mm;font-size:14pt;font-weight:900}
+.area .h span{font-size:8pt;font-weight:400;margin-left:3mm;color:#4c5d58}
+.cell{position:absolute;width:22mm;height:22mm;border:0.35mm dashed #a89878;border-radius:1mm}
+.yd{position:absolute;border:0.5mm dashed #b0503a;border-radius:2mm}
+.yd i{position:absolute;left:2mm;top:1.5mm;font-size:8pt;font-style:normal;font-weight:700;color:#8a3a28}
+.rb{position:absolute;top:2mm;height:36mm;border:0.35mm solid #2f705d;border-radius:1.5mm;padding:2mm;font-size:7.5pt;line-height:1.45;background:#fff}
+.rb b{display:block;font-size:11pt;color:#2f705d}
+/* 表・左 */
+.rg{position:absolute;width:26mm;height:26mm;border-radius:50%;background:#9a8f84;color:#fff;display:flex;align-items:center;justify-content:center;font-size:18pt;font-weight:900}
+.full{position:absolute;background:#b0503a;color:#fff;font-size:7pt;font-weight:700;padding:0.4mm 1.6mm;border-radius:1mm;white-space:nowrap}
+.pile{position:absolute;width:7mm;height:4.6mm;background:#8f867a;border:0.25mm solid #5d564c;border-radius:0.6mm}
+/* 裏・左 */
+.zn{position:absolute;width:80mm;height:118mm;border-radius:3mm;border:0.6mm solid}
+.zn em{position:absolute;left:0;right:0;bottom:3mm;text-align:center;font-size:8pt;font-style:normal}
+.zh{position:absolute;top:16mm;width:80mm;text-align:center;font-size:13pt;font-weight:900}
+.rl{position:absolute;left:10mm;width:14mm;height:14mm;border-radius:50%;color:#fff;font-weight:900;font-size:14pt;display:flex;align-items:center;justify-content:center}
+/* 裏・右 */
+.ev{position:absolute;left:12mm;width:265mm;border-radius:2.5mm;background:#fff;border:0.35mm solid #c9bfd8;padding:3.5mm 5mm;font-size:12pt;line-height:1.6}
+.ev b{display:block;font-size:15pt;color:#4b3a63;margin-bottom:1mm}
+.vr{display:flex;gap:3mm;align-items:flex-start}
+.vr i{flex:0 0 13mm;text-align:center;border-radius:1mm;color:#fff;font-size:10pt;font-style:normal;font-weight:700;margin-top:0.8mm}
+.hist{margin-top:2mm;font-size:9pt;color:#4c4560;background:#efeaf5;border-radius:1mm;padding:1.2mm 2.5mm}
+.tn{width:14mm;height:11mm;border:0.5mm solid #4b3a63;border-radius:1.5mm;font-weight:900;display:inline-flex;align-items:center;justify-content:center;font-size:12pt}
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<template id="FR">
+  <div class="abs" style="left:0;top:0;width:297mm;height:420mm;background:#eef0e6"></div>
+  <div class="abs" style="left:273mm;top:0;width:24mm;height:420mm;background:#d7e6ee"></div>
+  <div class="abs" style="left:279mm;top:200mm;font-size:12pt;color:#3d5f70;font-weight:700">海</div>
+  <div class="abs" style="left:276mm;top:146mm;width:6mm;height:6mm;border-radius:50%;background:#444"></div>
+  <div class="abs" style="left:274mm;top:139mm;font-size:6.5pt">原発</div>
+  <div class="abs" style="left:12mm;top:10mm;font-size:20pt;font-weight:900">地域A・B・C</div>
+  <div class="abs" style="left:68mm;top:14mm;font-size:7pt;color:#6b7a74">（地図の続きは後で使います）</div>
+
+  <div class="area" style="top:24mm;height:118mm;border-color:#5f7d3a">
+    <div class="h" style="color:#5f7d3a">地域B<span>田畑の広がる町。土が多く出る。農地を仮置場に貸してきた。　仮置場11マス</span></div>
+    <div class="cell" style="left:5mm;top:14mm"></div><div class="cell" style="left:29mm;top:14mm"></div><div class="cell" style="left:53mm;top:14mm"></div><div class="cell" style="left:77mm;top:14mm"></div>
+    <div class="cell" style="left:5mm;top:38mm"></div><div class="cell" style="left:29mm;top:38mm"></div><div class="cell" style="left:53mm;top:38mm"></div><div class="cell" style="left:77mm;top:38mm"></div>
+    <div class="cell" style="left:5mm;top:62mm"></div><div class="cell" style="left:29mm;top:62mm"></div><div class="cell" style="left:53mm;top:62mm"></div>
+    <div class="abs" style="left:5mm;top:90mm;font-size:7.5pt;color:#5d6b66;width:96mm;line-height:1.5">仮置場：土タイルをマスに置く。<br>他の地域の土を引き受けたら、人手を1人受け取る。</div>
+    <div class="yd" style="left:108mm;top:14mm;width:142mm;height:98mm"><i>庭先（現場保管）　置ききれない土はここへ</i></div>
+  </div>
+
+  <div class="area" style="top:148mm;height:122mm;border-color:#2f705d">
+    <div class="h" style="color:#2f705d">地域A<span>原発に近く、避難が続く町。人のいない町で除染が進む。　仮置場9マス</span></div>
+    <div class="cell" style="left:5mm;top:14mm"></div><div class="cell" style="left:29mm;top:14mm"></div><div class="cell" style="left:53mm;top:14mm"></div>
+    <div class="cell" style="left:5mm;top:38mm"></div><div class="cell" style="left:29mm;top:38mm"></div><div class="cell" style="left:53mm;top:38mm"></div>
+    <div class="cell" style="left:5mm;top:62mm"></div><div class="cell" style="left:29mm;top:62mm"></div><div class="cell" style="left:53mm;top:62mm"></div>
+    <div class="yd" style="left:84mm;top:14mm;width:166mm;height:102mm"><i>庭先（現場保管）　置ききれない土はここへ</i></div>
+  </div>
+
+  <div class="area" style="top:276mm;height:84mm;border-color:#3d6f8a">
+    <div class="h" style="color:#3d6f8a">地域C<span>人が暮らし続けた町。校庭・公園から除染。空き地が少ない。　仮置場5マス</span></div>
+    <div class="cell" style="left:5mm;top:14mm"></div><div class="cell" style="left:29mm;top:14mm"></div><div class="cell" style="left:53mm;top:14mm"></div><div class="cell" style="left:77mm;top:14mm"></div><div class="cell" style="left:101mm;top:14mm"></div>
+    <div class="yd" style="left:130mm;top:14mm;width:120mm;height:64mm"><i>庭先（現場保管）　置ききれない土はここへ</i></div>
+  </div>
+
+  <div class="abs" style="left:12mm;top:366mm;width:256mm;height:40mm">
+    <div class="rb" style="left:0;width:58mm"><b>R1　2011年夏</b>除染が始まる。土は出るが、行き先は決まっていない。各地域、山札から2枚。</div>
+    <div class="rb" style="left:60mm;width:58mm"><b>R2　2011〜12年</b>仮置場を探す。各地域1枚。置ききれなければ、人手を渡して他の地域に頼める。</div>
+    <div class="rb" style="left:120mm;width:58mm"><b>R3　2012〜13年</b>仮置場が埋まっていく。各地域1枚。庭先に残った土は、住民の不安になる。</div>
+    <div class="rb" style="left:180mm;width:58mm"><b>R4　2013年</b>どこも満杯に近い。各地域1枚。終わったら、施設の候補地を国に推薦する。</div>
+    <div class="rb" style="left:240mm;width:16mm;border-style:dashed;border-color:#4b3a63;display:flex;align-items:center;justify-content:center;font-size:20pt;font-weight:900;color:#4b3a63">？</div>
+  </div>
+</template>
+
+<template id="FL">
+  <div class="abs" style="left:0;top:0;width:297mm;height:420mm;background:#e7e9df"></div>
+  <div class="abs" style="left:10mm;top:10mm;font-size:20pt;font-weight:900;color:#4c5d58">県の地図</div>
+  <div class="abs" style="left:10mm;top:22mm;font-size:9pt;color:#5d6b66">A・B・Cのほかにも、県内の多くの地域で除染が進んでいる</div>
+  <div class="rg" style="left:30mm;top:50mm">F</div><div class="full" style="left:28mm;top:78mm">仮置場 満杯</div>
+  <div class="pile" style="left:58mm;top:56mm"></div><div class="pile" style="left:58mm;top:62mm"></div><div class="pile" style="left:66mm;top:59mm"></div><div class="pile" style="left:62mm;top:68mm"></div>
+  <div class="rg" style="left:120mm;top:40mm">E</div><div class="full" style="left:118mm;top:68mm">仮置場 満杯</div>
+  <div class="pile" style="left:148mm;top:46mm"></div><div class="pile" style="left:148mm;top:52mm"></div><div class="pile" style="left:156mm;top:49mm"></div>
+  <div class="rg" style="left:210mm;top:60mm">D</div><div class="full" style="left:208mm;top:88mm">仮置場 満杯</div>
+  <div class="pile" style="left:238mm;top:66mm"></div><div class="pile" style="left:238mm;top:72mm"></div><div class="pile" style="left:246mm;top:69mm"></div><div class="pile" style="left:242mm;top:78mm"></div>
+  <div class="rg" style="left:60mm;top:150mm">G</div><div class="full" style="left:58mm;top:178mm">仮置場 満杯</div>
+  <div class="pile" style="left:88mm;top:156mm"></div><div class="pile" style="left:88mm;top:162mm"></div><div class="pile" style="left:96mm;top:159mm"></div>
+  <div class="rg" style="left:170mm;top:165mm">J</div><div class="full" style="left:168mm;top:193mm">仮置場 満杯</div>
+  <div class="pile" style="left:198mm;top:171mm"></div><div class="pile" style="left:198mm;top:177mm"></div><div class="pile" style="left:206mm;top:174mm"></div><div class="pile" style="left:202mm;top:183mm"></div>
+  <div class="rg" style="left:20mm;top:265mm">I</div><div class="full" style="left:18mm;top:293mm">仮置場 満杯</div>
+  <div class="pile" style="left:48mm;top:271mm"></div><div class="pile" style="left:48mm;top:277mm"></div><div class="pile" style="left:56mm;top:274mm"></div>
+  <div class="rg" style="left:115mm;top:275mm">H</div><div class="full" style="left:113mm;top:303mm">仮置場 満杯</div>
+  <div class="pile" style="left:143mm;top:281mm"></div><div class="pile" style="left:143mm;top:287mm"></div><div class="pile" style="left:151mm;top:284mm"></div><div class="pile" style="left:147mm;top:293mm"></div>
+  <div class="rg" style="left:215mm;top:280mm">L</div><div class="full" style="left:213mm;top:308mm">仮置場 満杯</div>
+  <div class="pile" style="left:243mm;top:286mm"></div><div class="pile" style="left:243mm;top:292mm"></div><div class="pile" style="left:251mm;top:289mm"></div>
+  <div class="rg" style="left:80mm;top:360mm">K</div><div class="full" style="left:78mm;top:388mm">仮置場 満杯</div>
+  <div class="pile" style="left:108mm;top:366mm"></div><div class="pile" style="left:108mm;top:372mm"></div><div class="pile" style="left:116mm;top:369mm"></div>
+</template>
+
+<template id="BL">
+  <div class="abs" style="left:0;top:0;width:297mm;height:420mm;background:#f6f3fa"></div>
+  <div class="abs" style="left:10mm;top:8mm;font-size:18pt;font-weight:900;color:#4b3a63">住民の広場</div>
+  <div class="zh" style="left:30mm;color:#8a3a28">反対</div>
+  <div class="zh" style="left:116mm;color:#6b5310">条件次第</div>
+  <div class="zh" style="left:202mm;color:#1f5a40">賛成</div>
+
+  <div class="rl" style="top:86mm;background:#2f705d">A</div>
+  <div class="zn" style="left:30mm;top:30mm;border-color:#b0503a;background:#f7e6e1"><em style="color:#8a3a28">先祖の土地を守りたい</em></div>
+  <div class="zn" style="left:116mm;top:30mm;border-color:#a07e22;background:#f7efd9"><em style="color:#6b5310">条件によっては協力する</em></div>
+  <div class="zn" style="left:202mm;top:30mm;border-color:#2f7d5b;background:#e1f0e8"><em style="color:#1f5a40">帰還は難しいから</em></div>
+
+  <div class="rl" style="top:210mm;background:#5f7d3a">B</div>
+  <div class="zn" style="left:30mm;top:154mm;border-color:#b0503a;background:#f7e6e1"><em style="color:#8a3a28">先祖の土地を守りたい</em></div>
+  <div class="zn" style="left:116mm;top:154mm;border-color:#a07e22;background:#f7efd9"><em style="color:#6b5310">条件によっては協力する</em></div>
+  <div class="zn" style="left:202mm;top:154mm;border-color:#2f7d5b;background:#e1f0e8"><em style="color:#1f5a40">前に進みたい</em></div>
+
+  <div class="rl" style="top:334mm;background:#3d6f8a">C</div>
+  <div class="zn" style="left:30mm;top:278mm;border-color:#b0503a;background:#f7e6e1"><em style="color:#8a3a28">先祖の土地を守りたい</em></div>
+  <div class="zn" style="left:116mm;top:278mm;border-color:#a07e22;background:#f7efd9"><em style="color:#6b5310">条件によっては協力する</em></div>
+  <div class="zn" style="left:202mm;top:278mm;border-color:#2f7d5b;background:#e1f0e8"><em style="color:#1f5a40">土を早く片付けたい</em></div>
+
+  <div class="abs" style="left:30mm;top:400mm;width:252mm;font-size:8.5pt;line-height:1.5;color:#4c4560">はじめは各地域 反対3・条件次第2・賛成1。フェーズ1で庭先に土が3枚以上残った地域は、反対4・条件次第1・賛成1で始める。</div>
+</template>
+
+<template id="BR">
+  <div class="abs" style="left:0;top:0;width:297mm;height:420mm;background:#f6f3fa"></div>
+  <div class="abs" style="left:12mm;top:9mm;display:flex;gap:3mm;align-items:center">
+    <span style="font-size:13pt;font-weight:900;margin-right:2mm">ターン</span><span class="tn">1</span><span class="tn">2</span><span class="tn">3</span><span style="font-size:11pt;margin-left:3mm">→ 町長の決断</span>
+  </div>
+  <div class="ev" style="top:26mm;height:76mm"><b>ターン1　政府の説明会</b>
+    <div style="font-size:10.5pt;margin-bottom:1.5mm">国が施設の安全対策と、30年以内に県外で最終処分する方針を説明する。</div>
+    <div class="vr"><i style="background:#b0503a">1</i>「説明を聞いても、何十年も置かれ続けるとしか思えない」</div>
+    <div class="vr"><i style="background:#c9744e">2〜3</i>「30年後に本当に県外へ運ぶ保証はあるのか」</div>
+    <div class="vr"><i style="background:#4c8c63">4〜5</i>「安全の管理の話は分かった。あとは条件次第だ」</div>
+    <div class="vr"><i style="background:#2f7d5b">6</i>「このままでは誰も帰れない。前に進めるなら協力したい」</div>
+    <div class="hist">史実：2014年5〜6月、大熊町・双葉町の町民などを対象に、県内10回・県外6回の計16回の説明会が開かれた（環境省）</div></div>
+  <div class="ev" style="top:106mm;height:76mm"><b>ターン2　政府から土地の買い取りの提案</b>
+    <div style="font-size:10.5pt;margin-bottom:1.5mm">国が施設の用地を買い取りたいと提案する。所有を残したまま土地を使う方式も選べる。</div>
+    <div class="vr"><i style="background:#b0503a">1</i>「先祖代々の土地を、国に売る気はない」</div>
+    <div class="vr"><i style="background:#c9744e">2〜3</i>「値段の問題ではない。手放したら、戻る場所がなくなる」</div>
+    <div class="vr"><i style="background:#4c8c63">4〜5</i>「売らずに貸す形も選べるなら、考えてもいい」</div>
+    <div class="vr"><i style="background:#2f7d5b">6</i>「避難先で暮らしを建て直すには、この補償が必要だ」</div>
+    <div class="hist">史実：用地は大熊町・双葉町の約1,600ha。登記上の地権者は2,360人（環境省）</div></div>
+  <div class="ev" style="top:186mm;height:76mm"><b>ターン3　時間の経過と、住民からの決断の要請</b>
+    <div style="font-size:10.5pt;margin-bottom:1.5mm">避難と仮置きが長引く。町のあちこちから「町長、そろそろ決めてほしい」という声が上がる。</div>
+    <div class="vr"><i style="background:#b0503a">1</i>「急かされて決めることではない。もっと待ってほしい」</div>
+    <div class="vr"><i style="background:#c9744e">2〜3</i>「町が受け入れたら、もう二度と戻れない気がする」</div>
+    <div class="vr"><i style="background:#4c8c63">4〜5</i>「庭先や仮置場の土を、いつまでもこのままにはできない」</div>
+    <div class="vr"><i style="background:#2f7d5b">6</i>「どちらでもいい。私たちは次に進みたい」</div>
+    <div class="hist">史実：2014年9月に県知事が建設受け入れを容認し、2015年1月に大熊町・双葉町が建設受け入れを容認した（環境省）</div></div>
+  <div class="ev" style="top:266mm;height:42mm;background:#efeaf5"><b>サイコロの目＋地域の事情で、住民を動かす</b>
+    1：2人を反対側へ　　2〜3：1人を反対側へ　　4〜5：1人を賛成側へ　　6：2人を賛成側へ<br>
+    <span style="font-size:10pt;color:#4c4560">反対側へ＝条件次第の人を反対へ（いなければ賛成の人を条件次第へ）。賛成側へも同じ考え方。</span></div>
+  <div class="ev" style="top:312mm;height:48mm"><b>地域の事情（出目に足す）</b>
+    A：ターン2・3で＋1（避難が長く、生活の建て直しが要る）<br>B：ターン2で−1（田んぼは代々の暮らしそのもの）<br>C：ターン1で−1（施設の近くで暮らし続ける不安）</div>
+  <div class="ev" style="top:364mm;height:44mm;border-color:#4b3a63"><b>3ターンの後：町長の決断</b>
+    決断カードの「受け入れる」「受け入れない」の向きを机の下で選び、手で隠して出す。<br>全員そろったら、合図で同時に手をどける。勝ち負けはない。正解もない。</div>
+</template>
+
+<script>
+const mode = location.search.includes('a2') ? 'a2' : 'a3';
+const root = document.getElementById('root');
+const ps = document.getElementById('pagestyle');
+function half(id, left) {
+  const d = document.createElement('div');
+  d.className = 'half';
+  d.style.left = left + 'mm';
+  d.appendChild(document.getElementById(id).content.cloneNode(true));
+  return d;
+}
+function page(w, h, parts) {
+  const p = document.createElement('div');
+  p.className = 'page';
+  p.style.width = w + 'mm'; p.style.height = h + 'mm';
+  parts.forEach(x => p.appendChild(x));
+  root.appendChild(p);
+}
+if (mode === 'a3') {
+  ps.textContent = '@page{size:297mm 420mm;margin:0}';
+  // 1枚目：表＝A・B・C／裏＝住民の広場、2枚目：表＝D〜L／裏＝出来事（長辺とじの両面）
+  page(297, 420, [half('FR', 0)]);
+  page(297, 420, [half('BL', 0)]);
+  page(297, 420, [half('FL', 0)]);
+  page(297, 420, [half('BR', 0)]);
+} else {
+  ps.textContent = '@page{size:594mm 420mm;margin:0}';
+  // 表：左＝D〜L、右＝A・B・C／裏（短辺とじ）：左＝住民の広場、右＝出来事
+  page(594, 420, [half('FL', 0), half('FR', 297)]);
+  page(594, 420, [half('BL', 0), half('BR', 297)]);
+}
+</script>
+</body>
+</html>

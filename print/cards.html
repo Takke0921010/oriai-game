@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>折り合い カード・タイル・コマ 試し刷り</title>
+<style>
+@page{size:210mm 297mm;margin:0}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{font-family:'Hiragino Sans','Hiragino Kaku Gothic ProN','Yu Gothic',sans-serif;color:#233b39;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.page{position:relative;width:210mm;height:297mm;overflow:hidden;page-break-after:always;break-after:page}
+.page:last-child{page-break-after:auto;break-after:auto}
+.it{position:absolute;outline:0.2mm solid #9a9a9a;outline-offset:-0.1mm;overflow:hidden}
+.cap{position:absolute;left:10mm;font-size:8pt;color:#777}
+/* 町長カード */
+.mf{background:#fffdf7;text-align:center;padding-top:8mm}
+.mf .n{font-size:13pt;font-weight:900}
+.mf .ar{width:0;height:0;margin:8mm auto 0;border-left:11mm solid transparent;border-right:11mm solid transparent;border-top:20mm solid #e07b2a}
+.mf .s{font-size:8.5pt;color:#4c5d58;margin:7mm 5mm 0;line-height:1.5}
+.mf .u{position:absolute;left:0;right:0;bottom:5mm;font-size:6.5pt;color:#777;line-height:1.5}
+.mb{background:#775b98;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;font-weight:900;font-size:19pt;line-height:1.4}
+.mb span{font-size:9pt;font-weight:400;margin-top:6mm}
+/* 決断カード */
+.dc{background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:900;font-size:18pt;text-align:center}
+.dc span{font-size:9pt;color:#233b39;margin-bottom:4mm}
+.dc em{position:absolute;left:0;right:0;bottom:5mm;font-size:6.5pt;font-style:normal;font-weight:400;color:#777}
+/* タイル */
+.tf{background:#fff8ec;display:flex;align-items:center;gap:1.5mm;padding-left:2.5mm;font-size:8.5pt;font-weight:900;color:#2a2a24}
+.tf .dots{font-size:6.5pt;letter-spacing:0.6mm;color:#7a5a33;font-weight:400}
+.tb{color:#fff;display:flex;align-items:center;justify-content:center;font-size:14pt;font-weight:900}
+/* 人型コマ（紙） */
+.pc{background:#fff;display:flex;align-items:flex-end;justify-content:center}
+.pc i{position:absolute;left:50%;top:3mm;width:6mm;height:6mm;margin-left:-3mm;border-radius:50%;background:#6b5a3a}
+.pc s{display:block;width:11mm;height:7mm;margin-bottom:2.5mm;border-radius:5.5mm 5.5mm 1mm 1mm;background:#6b5a3a}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+const W = 210;
+const R = {A:{c:'#2f705d',s:'原発に近く、<br>避難が続く町'},B:{c:'#5f7d3a',s:'田畑の<br>広がる町'},C:{c:'#3d6f8a',s:'人が暮らし<br>続けた町'}};
+const T = {house:['家',1,'#c98b54'],forest:['森',1,'#5d8a4e'],school:['学校',2,'#d1a83a'],park:['公園',2,'#7aa66a'],field:['畑',2,'#a3804a'],rice:['田んぼ',3,'#8c9b3e']};
+const root = document.getElementById('root');
+function newPage(caption, capTop = 4) {
+  const p = document.createElement('div'); p.className = 'page'; root.appendChild(p);
+  if (caption) { const c = document.createElement('div'); c.className = 'cap'; c.style.top = capTop + 'mm'; c.textContent = caption; p.appendChild(c); }
+  return p;
+}
+function put(p, x, y, w, h, cls, html, style = '') {
+  const d = document.createElement('div'); d.className = 'it ' + cls;
+  d.style.cssText = `left:${x}mm;top:${y}mm;width:${w}mm;height:${h}mm;${style}`;
+  d.innerHTML = html; p.appendChild(d); return d;
+}
+const mirror = (x, w) => W - x - w;
+
+/* --- 1・2ページ：町長カードと決断カード（63×88mm） --- */
+const cx = (W - 189) / 2, cy1 = 14, cy2 = 14 + 88 + 6;
+let p = newPage('表面：町長カード（上段）・決断カード（下段）。長辺とじで両面印刷し、灰色の線で切る');
+['A','B','C'].forEach((k, i) => {
+  put(p, cx + i * 63, cy1, 63, 88, 'mf', `<div class="n" style="color:${R[k].c}">地域${k}の町長</div><div class="ar"></div><div class="s">${R[k].s}</div><div class="u">候補地の推薦で、自分以外の<br>地域にこの指さしを置く</div>`, `border-top:3mm solid ${R[k].c}`);
+  put(p, cx + i * 63, cy2, 63, 88, 'dc', `<span>地域${k}</span>受け入れる<em>勝ち負けはありません</em>`, 'color:#2f7d5b;border:2.5mm solid #2f7d5b');
+});
+p = newPage('裏面（左右が反転して並ぶ）');
+['A','B','C'].forEach((k, i) => {
+  const x = mirror(cx + i * 63, 63);
+  put(p, x, cy1, 63, 88, 'mb', `受け入れる<br>側<span>地域${k}</span>`);
+  put(p, x, cy2, 63, 88, 'dc', `<span>地域${k}</span>受け入れない<em>勝ち負けはありません</em>`, 'color:#b0503a;border:2.5mm solid #b0503a');
+});
+
+/* --- 3・4ページ：土タイル（1マス22mm） --- */
+const U = 22, G = 2; // 長さ = n*22 + (n-1)*2
+const len = n => n * U + (n - 1) * G;
+const rows = [
+  ['A', ['rice','rice','school']], ['A', ['school','house','house','house','house','forest','forest']],
+  ['B', ['rice','rice','field']], ['B', ['rice','rice','field']], ['B', ['field','house','house','forest']],
+  ['C', ['school','school','school','house','house']], ['C', ['park','park','park','house','house']]
+];
+const tx = 8, ty0 = 16;
+const tiles = [];
+let y = ty0, prev = null;
+rows.forEach(([reg, list]) => {
+  if (prev && prev !== reg) y += 6;
+  let x = tx;
+  list.forEach(t => { const w = len(T[t][1]); tiles.push({reg, t, x, y, w}); x += w; });
+  y += U; prev = reg;
+});
+p = newPage('表面：土タイル30枚（A10・B10・C10）。長辺とじで両面印刷し、灰色の線で切る');
+tiles.forEach(o => put(p, o.x, o.y, o.w, U, 'tf', `${T[o.t][0]}<span class="dots">${'●'.repeat(T[o.t][1])}</span>`, `border-left:2.5mm solid ${T[o.t][2]}`));
+const lab = (pg, txt, yy) => { const d = document.createElement('div'); d.className = 'cap'; d.style.top = yy + 'mm'; d.textContent = txt; pg.appendChild(d); };
+p = newPage('裏面（左右が反転して並ぶ）。地域の色で山札を分ける');
+tiles.forEach(o => put(p, mirror(o.x, o.w), o.y, o.w, U, 'tb', o.reg, `background:${R[o.reg].c}`));
+
+/* --- 5ページ：人型コマ（紙・試し刷り用） --- */
+p = newPage('人型コマ（試し刷り用の紙版・24個＝18個＋予備6）。木製の人型コマがあればそちらを使う');
+for (let i = 0; i < 24; i++) {
+  const c = i % 6, r = Math.floor(i / 6);
+  put(p, 15 + c * 30, 16 + r * 30, 24, 24, 'pc', '<i></i><s></s>');
+}
+</script>
+</body>
+</html>
