@@ -119,6 +119,10 @@ th,td{border-bottom:1px solid #e1e4dc;padding:6px 8px;text-align:left;vertical-a
 .site .acts{display:flex;gap:4px;flex-wrap:wrap;margin-top:4px}
 .burden{font-size:11px;color:#8a3a28}
 .note{font-size:12px;color:#6b4a2a;background:#fbf2e4;padding:8px 10px;border-radius:6px;margin-top:10px;line-height:1.7}
+.tagcon{display:inline-block;font-size:11px;background:#f7e2dc;color:#8a3a28;border-radius:4px;padding:0 6px;margin-left:4px}
+.tagok{display:inline-block;font-size:11px;background:#e6efe9;color:#1f5a40;border-radius:4px;padding:0 6px;margin-left:4px}
+.pin{display:inline-block;width:10px;height:14px;border-radius:5px 5px 2px 2px;background:#6b5a3a;margin:0 1px;vertical-align:-2px}
+.turncard{font-size:13px;background:#f3f6f1;border-radius:6px;padding:8px 10px;margin:10px 0 0;line-height:1.7}
 </style>
 </head>
 <body>
@@ -151,12 +155,12 @@ const DISTRICTS=[
    lands:[{name:'公園',cap:3,burden:1}]}
 ];
 const PRIORITY={school:0,house:1,park:2,field:3,rice:3,forest:4};
-const ACTIONS_PER_ROUND=2,START_HANDS=1,TOWN_ONSITE_LIMIT=6;
+const ACTIONS_PER_ROUND=2,START_HANDS=0,TOWN_GOAL_LIMIT=6;
 const P1EVENTS=[null,
-  {date:'2011年夏',title:'除染が始まる',body:'広い範囲で除染が始まった。まず子どもが過ごす学校から。取り除いた土の置き場は、まだどこにもない。',effect:'区長は1ラウンドに行動2回。仮置場は、候補地を使って自分たちでつくる。',hist:'2011年春、郡山市は校庭の表土を取り除いたが、土の置き場が決まらず、処分場の周辺住民から強い反発があった。'},
-  {date:'2011〜2012年',title:'仮置場を探す',body:'地区ごとに置き場を探す。公有地を使い、足りなければ誰かの土地を借りる。',effect:'このラウンドの終わりまでに、3地区の学校をすべて除染する（町の目標）。',hist:'仮置場の確保には地権者や周辺住民の同意が要り、各地で時間がかかった。'},
+  {date:'2011年夏',title:'除染が始まる',body:'広い範囲で除染が始まった。まず子どもが過ごす学校から。取り除いた土の置き場は、まだどこにもない。',effect:'区長は1ラウンドに行動2回。除染するか、仮置場をつくるか。仮置場は、候補地を使って自分たちでつくる。',hist:'2011年春、郡山市は校庭の表土を取り除いたが、土の置き場が決まらず、処分場の周辺住民から強い反発があった。'},
+  {date:'2011〜2012年',title:'仮置場を探す',body:'地区ごとに置き場を探す。公有地を使い、足りなければ誰かの土地を借りる。',effect:'学校がまだ残っていれば、できるだけ早く除染しよう（子どもの場所から）。',hist:'仮置場の確保には地権者や周辺住民の同意が要り、各地で時間がかかった。'},
   {date:'2012〜2013年',title:'田んぼも借りる',body:'田んぼや公園も置き場になる。それでも、除染した家の庭先に土が残る。',effect:'置ききれない土は、除染した場所にそのまま残る（現場保管）。',hist:'置き場がないとき、土は除染した場所で保管された。福島市では2026年になっても現場保管が残っている。'},
-  {date:'2013年',title:'どこも満杯',body:'町じゅうの仮置場が埋まっていく。土をまとめて置く、もっと大きな施設が要る。',effect:'このラウンドの終わりに、町全体の現場保管を6か所以下にする（町の目標）。',hist:'2013年9月、国は「2年で除染し仮置場へ」という一律の目標を見直した。'}
+  {date:'2013年',title:'どこも満杯',body:'町じゅうの仮置場が埋まっていく。土をまとめて置く、もっと大きな施設が要る。',effect:'このラウンドの終わりに、まだ除染していない場所と現場保管を合わせて6か所以下にする（町の目標）。',hist:'2013年9月、国は「2年で除染し仮置場へ」という一律の目標を見直した。'}
 ];
 const P2EVENTS=[
   {key:'briefing',date:'ターン1',title:'政府の説明会',
@@ -213,12 +217,12 @@ function log(t){S.log.push({round:S.round,phase:S.phase,at:new Date().toISOStrin
 const ownFree=d=>sum(d.lands.filter(l=>l.open).map(l=>l.cap-l.used));
 const onsiteSites=d=>d.sites.filter(s=>s.onsite>0).length;
 const townOnsite=()=>sum(S.regions.map(onsiteSites));
-const schoolsLeft=()=>sum(S.regions.map(d=>d.sites.filter(s=>s.type==='school'&&!s.done).length));
-const schoolsTotal=()=>sum(S.regions.map(d=>d.sites.filter(s=>s.type==='school').length));
+const undoneSites=d=>d.sites.filter(s=>!s.done).length;
+const townGoalCount=()=>sum(S.regions.map(d=>undoneSites(d)+onsiteSites(d)));
 
 function newGame(seed,humans){
   S={version:'2.1',seed,rng:seed>>>0,startedAt:new Date().toISOString(),phase:'p1',step:'event',round:0,actor:0,
-     regions:[],pending:null,log:[],serial:0,schoolLate:false,townMods:[],revealStep:0,
+     regions:[],pending:null,choose:null,log:[],serial:0,townMods:[],revealStep:0,
      p2:{turn:0,idx:0,rolling:false,last:null},decIdx:0,decCover:true,slide:0};
   DISTRICTS.forEach((D,i)=>{
     S.regions.push({i,key:D.key,name:D.name,sub:D.sub,human:humans[i],
@@ -231,101 +235,104 @@ function newGame(seed,humans){
   startRound();
 }
 
-/* ---------------- フェーズ1（半協力型・3地区） ---------------- */
+/* ---------------- フェーズ1（半協力型・3地区・ルール案第2版） ---------------- */
 function startRound(){S.round++;S.actor=0;S.step='event';log(`R${S.round} 開始：${P1EVENTS[S.round].title}`);render();}
 function beginTurns(){S.step='turn';S.actor=0;startActorTurn();}
-function startActorTurn(){const d=S.regions[S.actor];d.actions=ACTIONS_PER_ROUND;d.asked=false;render();maybeCpu();}
+function startActorTurn(){const d=S.regions[S.actor];d.actions=ACTIONS_PER_ROUND;S.choose=null;render();maybeCpu();}
 function putInto(d,n,foreign){
   let placed=0;
   for(const l of d.lands){if(!l.open)continue;const k=Math.min(n-placed,l.cap-l.used);if(k>0){l.used+=k;if(foreign)l.foreign+=k;placed+=k;}}
   return placed;
 }
-function decon(i,sid){
+// 除染する：場所を選ぶ → 置き場を選ぶ（自分の仮置場／他の地区に頼む／その場に置く）
+function startDecon(i,sid){
   const d=S.regions[i],s=d.sites.find(x=>x.id===sid);if(!s||s.done||d.actions<1)return;
-  s.done=true;const placed=putInto(d,s.soil);s.onsite=s.soil-placed;d.actions--;
-  log(`${d.name}：${TYPES[s.type].name}を除染。土${s.soil}（仮置場へ${placed}、現場保管${s.onsite}）`);
+  S.choose={i,sid,n:s.soil,refused:[]};
 }
+function finishDecon(dest){
+  const c=S.choose;if(!c)return;
+  const d=S.regions[c.i],s=d.sites.find(x=>x.id===c.sid),nm=TYPES[s.type].name;
+  s.done=true;d.actions--;S.choose=null;
+  if(dest==='own'){putInto(d,c.n);s.onsite=0;log(`${d.name}：${nm}を除染。土${c.n}を自分の仮置場へ`);}
+  else if(dest==='site'){s.onsite=c.n;log(`${d.name}：${nm}を除染。土${c.n}はその場に残った（現場保管）`);}
+  else{
+    const T=S.regions[dest.to];putInto(T,c.n,true);s.onsite=0;T.hands++;T.received+=c.n;d.sent+=c.n;
+    log(`${T.name}が${d.name}の${nm}の土${c.n}を引き受けた（引き受けた印を1つ受け取った）`);
+  }
+}
+// 仮置場をつくる：自分の地区の現場保管が、入る分だけ自動で移る
 function flip(i,lid){
   const d=S.regions[i],l=d.lands.find(x=>x.id===lid);if(!l||l.open||d.actions<1)return;
   l.open=true;if(l.burden)d.flipped++;d.actions--;
-  log(`${d.name}：${l.name}を仮置場にした（容量${l.cap}${l.burden?'・住民の負担あり':''}）`);
+  let moved=0;
+  for(const s of [...d.sites].filter(s=>s.onsite>0).sort((a,b)=>b.onsite-a.onsite)){
+    if(ownFree(d)>=s.onsite){putInto(d,s.onsite);moved+=s.onsite;s.onsite=0;}
+  }
+  log(`${d.name}：${l.name}を仮置場にした（容量${l.cap}${l.burden?'・住民の負担あり':''}）${moved?`。現場保管の土${moved}を移した`:''}`);
 }
-function carryOwn(i,sid){
-  const d=S.regions[i],s=d.sites.find(x=>x.id===sid);if(!s||!s.onsite||d.actions<1||ownFree(d)<s.onsite)return;
-  const n=s.onsite;putInto(d,n);s.onsite=0;d.actions--;
-  log(`${d.name}：${TYPES[s.type].name}の現場保管${n}を自分の仮置場へ運んだ`);
-}
-function useHand(i){const d=S.regions[i];if(d.hands<1)return;d.hands--;d.actions++;log(`${d.name}：人手を使って行動を1回増やした`);}
-function request(from,to,sid){
-  const s=S.regions[from].sites.find(x=>x.id===sid);
-  S.pending={from,to,sid,n:s.onsite};
+function request(to){
+  const c=S.choose;if(!c)return;
+  S.pending={from:c.i,to,sid:c.sid,n:c.n};
   if(!S.regions[to].human)respond(cpuAccept(S.pending));else render();
 }
 function cpuAccept(p){
   const T=S.regions[p.to],room=ownFree(T)-p.n;
   if(room<0)return false;
-  if(T.received+p.n<3)return true;
+  if(T.hands<1)return true;
   return room>=3;
 }
 function respond(ok){
   const p=S.pending;if(!p)return;
-  const F=S.regions[p.from],T=S.regions[p.to],s=F.sites.find(x=>x.id===p.sid);
+  const F=S.regions[p.from],T=S.regions[p.to];
   S.pending=null;
-  if(ok&&s&&s.onsite===p.n&&ownFree(T)>=p.n&&F.actions>0){
-    putInto(T,p.n,true);s.onsite=0;F.sent+=p.n;T.received+=p.n;
-    if(F.hands>0)F.hands--;T.hands++;F.actions--;
-    log(`${T.name}が${F.name}の${TYPES[s.type].name}の土${p.n}を引き受けた（人手1を受け取った）`);
+  if(ok&&ownFree(T)>=p.n&&S.choose){
+    finishDecon({to:p.to});
     flash(`${T.name}が引き受けました。`);
   }else{
+    if(S.choose)S.choose.refused.push(p.to);
     log(`${T.name}は${F.name}の頼み（土${p.n}）を断った`);
-    flash(`${T.name}は断りました。行動は使っていません。`);
+    flash(`${T.name}は断りました。ほかの置き場を選んでください。`);
+    if(!F.human&&S.choose)finishDecon(ownFree(F)>=p.n?'own':'site');
   }
   render();
   if(!F.human)setTimeout(cpuStep,500);
 }
 function endTurn(){
-  const d=S.regions[S.actor];
+  const d=S.regions[S.actor];S.choose=null;
   log(`${d.name}：手番終了（現場保管 ${onsiteSites(d)}か所）`);
   if(S.actor<2){S.actor++;startActorTurn();}else endRound();
 }
 function endRound(){
-  if(S.round===2&&schoolsLeft()>0){S.schoolLate=true;log('町の目標：学校の除染がR2に間に合わなかった');}
   if(S.round>=4){finishPhase1();return;}
   S.step='roundEnd';render();
 }
+const onsiteSupport=n=>n<=1?0:n<=3?1:2;
 function finishPhase1(){
-  if(S.schoolLate)S.townMods.push({v:-1,t:'学校の除染が遅れた。「町は子どもを後回しにした」'});
-  const to=townOnsite();
-  if(to>TOWN_ONSITE_LIMIT)S.townMods.push({v:-1,t:`町に現場保管が${to}か所残った。「町を信用できない」`});
+  const g=townGoalCount();
+  if(g>TOWN_GOAL_LIMIT)S.townMods.push({v:-1,t:`まだ除染していない場所と現場保管が、合わせて${g}か所残った。「町を信用できない」`});
   S.regions.forEach(d=>{
     if(d.flipped>0){shiftResidents(d,-d.flipped);d.startNotes.push(`田んぼや公園を仮置場に${d.flipped}か所差し出した：${d.flipped}人が反対側へ「もう十分、土地を差し出した」`);}
-    if(d.received>=3){shiftResidents(d,-1);d.startNotes.push(`他の地区の土を${d.received}引き受けた：1人が反対側へ「よその地区の土まで」`);}
-    const k=Math.floor(onsiteSites(d)/2);
-    if(k>0){shiftResidents(d,k);d.startNotes.push(`現場保管が${onsiteSites(d)}か所残った：${k}人が賛成側へ「早く運び出してほしい」`);}
+    if(d.hands>=2){shiftResidents(d,-1);d.startNotes.push(`引き受けた印が${d.hands}つ：1人が反対側へ「よその地区の土まで」`);}
+    const n=onsiteSites(d),k=onsiteSupport(n);
+    if(k>0){shiftResidents(d,k);d.startNotes.push(`現場保管が${n}か所残った：${k}人が賛成側へ「早く運び出してほしい」`);}
   });
-  S.phase='p1end';log(`フェーズ1終了：町の現場保管${to}か所、学校の期限${S.schoolLate?'遅れ':'達成'}`);render();
+  S.phase='p1end';log(`フェーズ1終了：まだ除染していない場所と現場保管 ${g}か所（目標${TOWN_GOAL_LIMIT}以下）`);render();
 }
 function maybeCpu(){if(S.phase==='p1'&&S.step==='turn'&&!S.regions[S.actor].human)setTimeout(cpuStep,500);}
 function cpuStep(){
   if(S.phase!=='p1'||S.step!=='turn'||S.pending)return;
   const d=S.regions[S.actor];if(d.human)return;
   const next=()=>{render();setTimeout(cpuStep,350);};
+  if(d.actions<1)return endTurn();
   const todo=d.sites.filter(s=>!s.done).sort((a,b)=>PRIORITY[a.type]-PRIORITY[b.type]);
-  const waiting=d.sites.filter(s=>s.onsite>0);
-  const own=waiting.find(s=>ownFree(d)>=s.onsite);
-  const ask=d.asked?null:waiting.map(s=>({s,to:S.regions.filter(o=>o!==d&&ownFree(o)>=s.onsite).sort((a,b)=>ownFree(b)-ownFree(a))[0]})).find(x=>x.to);
-  if(d.actions<1){
-    if(d.hands>0&&(todo.length||own||ask)){useHand(d.i);return next();}
-    return endTurn();
-  }
-  if(todo.length){
-    const s=todo[0],closed=d.lands.filter(l=>!l.open).sort((a,b)=>a.burden-b.burden);
-    if(ownFree(d)<s.soil&&closed.length&&(closed[0].burden===0||S.round>=2)){flip(d.i,closed[0].id);return next();}
-    decon(d.i,s.id);return next();
-  }
-  if(own){carryOwn(d.i,own.id);return next();}
-  if(ask){d.asked=true;request(d.i,ask.to.i,ask.s.id);return;}
-  endTurn();
+  if(!todo.length)return endTurn();
+  const s=todo[0],closed=d.lands.filter(l=>!l.open).sort((a,b)=>a.burden-b.burden);
+  if(ownFree(d)<s.soil&&closed.length){flip(d.i,closed[0].id);return next();}
+  startDecon(d.i,s.id);
+  if(ownFree(d)>=s.soil){finishDecon('own');return next();}
+  const to=S.regions.filter(o=>o!==d&&ownFree(o)>=s.soil).sort((a,b)=>ownFree(b)-ownFree(a))[0];
+  if(to){request(to.i);return;}
+  finishDecon('site');return next();
 }
 
 /* ---------------- 候補の話し合い・明かし ---------------- */
@@ -414,13 +421,12 @@ function renderSetup(){
   <p>あなたは、ある町の3つの地区の<b>区長</b>です。<b>フェーズ1</b>では、3人で協力して町の除染を進めます。ただし、除染で出た土の置き場を自分の地区につくれば、自分の地区の住民が負担を負います。フェーズ1が終わると、ゲームは<b>フェーズ2</b>へ。そこからは別のゲームになります。</p>
   <details><summary>遊び方の要点（約2分）</summary>
   <ul style="line-height:1.9">
-    <li><b>フェーズ1：土の行き先</b>（4ラウンド）　区長は1ラウンドに行動2回。人手を1つ使うと1回増える。
+    <li><b>フェーズ1：土の行き先</b>（4ラウンド）　区長は1ラウンドに行動2回。
       <ul>
-        <li><b>除染する</b>：学校・家・田んぼなど、地区の場所を1つ除染。出た土は仮置場へ。入らない分は、その場所に残る（現場保管）。</li>
-        <li><b>仮置場をつくる</b>：候補地を仮置場にする。田んぼや公園を使うと、住民の反対が出る。</li>
-        <li><b>運ぶ</b>：現場保管の土を仮置場へ。他の地区の仮置場に入れるときは、その区長の了解が要る。引き受けてもらったら人手を1つ渡す。</li>
+        <li><b>除染する</b>：学校・家・田んぼなど、地区の場所を1つ除染し、出た土の置き場を選ぶ。①自分の仮置場、②他の地区に頼む（引き受けてもらったら「引き受けた印」を1つ渡す）、③その場に置く（現場保管）。</li>
+        <li><b>仮置場をつくる</b>：候補地を仮置場にする。田んぼや公園を使うと、住民の反対が出る。自分の地区の現場保管が、入る分だけ移る。</li>
       </ul></li>
-    <li><b>町の目標</b>（全員で）：R2までに学校をすべて除染する。R4の終わりに、町の現場保管を6か所以下にする。</li>
+    <li><b>町の目標</b>（全員で・1つだけ）：R4の終わりに、まだ除染していない場所と現場保管を合わせて6か所以下にする。</li>
     <li>フェーズ1の結果は、フェーズ2の住民の気持ちに表れる。</li>
     <li><b>フェーズ2：受け入れの問い</b>（3ターン）　出来事ごとに区長がサイコロを振り、住民の反応を知る。最後に、地区として受け入れるかを他の人に見せずに決める。2地区以上が受け入れれば、町として受け入れる。勝ち負けはない。</li>
   </ul></details>
@@ -440,46 +446,62 @@ function renderSetup(){
 
 /* ---------- フェーズ1 ---------- */
 function goalsHtml(){
-  const sl=schoolsLeft(),st=schoolsTotal(),to=townOnsite();
-  const schoolCls=S.schoolLate?'ng':sl===0?'ok':'';
-  const onCls=S.round>=4&&S.phase!=='p1'?(to<=TOWN_ONSITE_LIMIT?'ok':'ng'):(to<=TOWN_ONSITE_LIMIT?'':'ng');
+  const u=sum(S.regions.map(undoneSites)),o=townOnsite(),g=u+o;
+  const done=S.phase!=='p1';
+  const cls=!done?'':g<=TOWN_GOAL_LIMIT?'ok':'ng';
   return `<div class="goals"><strong>町の目標</strong>
-    <span class="${schoolCls}">学校の除染 ${st-sl}/${st}（R2まで）${S.schoolLate?'　間に合わなかった':''}</span>
-    <span class="${onCls}">町の現場保管 ${to}か所（R4の終わりに${TOWN_ONSITE_LIMIT}以下）</span></div>`;
+    <span class="${cls}">まだ除染していない場所 ${u} ＋ 現場保管 ${o} ＝ <b>${g}か所</b>（R4の終わりに${TOWN_GOAL_LIMIT}以下）</span></div>`;
 }
 function landHtml(d,l,cur){
+  const tag=l.burden?'<span class="tagcon">反対＋1</span>':'<span class="tagok">負担なし</span>';
   if(!l.open){
-    return `<div class="land closed"><b>候補地：${esc(l.name)}</b>　容量${l.cap}　<span class="burden">${l.burden?'住民の負担あり（反対1）':'住民の負担なし'}</span>
+    let cells='';for(let k=0;k<l.cap;k++)cells+='<i></i>';
+    return `<div class="land closed"><b>候補地：${esc(l.name)}</b> ${tag}<div class="cells">${cells}</div>
       ${cur?`<div style="margin-top:4px"><button class="small" data-flip="${l.id}" ${d.actions<1?'disabled':''}>仮置場をつくる</button></div>`:''}</div>`;
   }
   let cells='';
   for(let k=0;k<l.cap;k++)cells+=`<i class="${k<l.used-l.foreign?'f':k<l.used?'x':''}"></i>`;
-  return `<div class="land"><b>仮置場：${esc(l.name)}</b>　${l.used}/${l.cap}${l.foreign?`<span style="font-size:11px;color:#4b3a63">（よその地区の土${l.foreign}）</span>`:''}<div class="cells">${cells}</div></div>`;
+  return `<div class="land"><b>仮置場：${esc(l.name)}</b> ${tag}${l.foreign?`<span style="font-size:11px;color:#4b3a63">　紫＝よその地区の土</span>`:''}<div class="cells">${cells}</div></div>`;
 }
 function siteHtml(d,s,cur){
   const T=TYPES[s.type];
-  let acts='';
-  if(cur&&!s.done)acts=`<button class="small" data-decon="${s.id}" ${d.actions<1?'disabled':''}>除染する</button>`;
-  if(cur&&s.onsite>0){
-    acts=`<button class="small" data-carry="${s.id}" ${d.actions<1||ownFree(d)<s.onsite?'disabled':''}>自分の仮置場へ</button>`+
-      S.regions.filter(o=>o!==d).map(o=>`<button class="small" data-ask="${s.id}" data-to="${o.i}" ${d.actions<1||ownFree(o)<s.onsite?'disabled':''}>${o.key}に頼む</button>`).join('');
-  }
-  return `<div class="site ${s.done?'done':''}" style="--c:${T.color}"><b>${T.name}</b> <small>土${s.soil}</small>
-    ${s.done?(s.onsite>0?`<div style="color:#8a3a28;font-size:12px">現場保管 <span class="bags">${'■'.repeat(s.onsite)}</span></div>`:'<div style="font-size:12px">除染済み</div>'):''}
-    ${acts?`<div class="acts">${acts}</div>`:''}</div>`;
+  const act=cur&&!s.done?`<div class="acts"><button class="small" data-decon="${s.id}" ${d.actions<1?'disabled':''}>除染する</button></div>`:'';
+  const soil=s.done?(s.onsite>0?`<div style="color:#8a3a28;font-size:12px">現場保管 <span class="bags">${'■'.repeat(s.onsite)}</span></div>`:'<div style="font-size:12px">除染済み</div>')
+    :`<span class="bags" title="出る土">${'□'.repeat(s.soil)}</span>`;
+  return `<div class="site ${s.done?'done':''}" style="--c:${T.color}"><b>${T.name}</b> ${soil}${act}</div>`;
+}
+function handsHtml(d){
+  if(!d.hands)return '<span>引き受けた印 なし</span>';
+  return `<span>引き受けた印 ${'<i class="pin"></i>'.repeat(d.hands)}${d.hands>=2?'<span class="tagcon">反対＋1</span>':''}</span>`;
 }
 function regionPanel(d,i){
-  const cur=S.step==='turn'&&S.actor===i&&d.human&&!S.pending;
+  const cur=S.step==='turn'&&S.actor===i&&d.human&&!S.pending&&!S.choose;
   const active=S.step==='turn'&&S.actor===i;
   return `<section class="region ${active?'current':''}">
    <h2>${d.name}（${d.sub}） <small>${d.human?'人':'CPU'}${active?'・手番':''}</small></h2>
    <p class="story">${DISTRICTS[i].story}</p>
-   <div class="stat"><span>人手 ${d.hands}</span><span>引き受けた土 ${d.received}</span><span>頼んだ土 ${d.sent}</span><span>現場保管 ${onsiteSites(d)}か所</span></div>
-   <div class="label">仮置場（空き ${ownFree(d)}）</div>
+   <div class="stat">${handsHtml(d)}<span>現場保管 ${onsiteSites(d)}か所</span><span>まだ除染していない ${undoneSites(d)}か所</span></div>
+   <div class="label">仮置場と候補地</div>
    <div class="lands">${d.lands.map(l=>landHtml(d,l,cur)).join('')}</div>
-   <div class="label">除染する場所（${d.sites.filter(s=>s.done).length}/${d.sites.length}）</div>
+   <div class="label">除染する場所（□＝出る土）</div>
    <div class="sites">${d.sites.map(s=>siteHtml(d,s,cur)).join('')}</div>
   </section>`;
+}
+function chooseModal(){
+  const c=S.choose,d=S.regions[c.i],s=d.sites.find(x=>x.id===c.sid);
+  const others=S.regions.filter(o=>o!==d);
+  modal(`<h2>${TYPES[s.type].name}を除染する</h2><p>土が<b>${c.n}</b>出ます（${'■'.repeat(c.n)}）。置き場を選んでください。</p>
+   <div class="row" style="flex-direction:column;align-items:stretch">
+    <button class="primary" id="cOwn" ${ownFree(d)>=c.n?'':'disabled'}>① 自分の仮置場へ（空き ${ownFree(d)}）</button>
+    ${others.map(o=>`<button data-reqto="${o.i}" ${ownFree(o)>=c.n&&!c.refused.includes(o.i)?'':'disabled'}>② ${o.name}に頼む（空き ${ownFree(o)}）${c.refused.includes(o.i)?'　断られた':''}</button>`).join('')}
+    <button id="cSite">③ その場に置く（現場保管）</button>
+   </div>
+   <p class="note">他の地区に頼んで引き受けてもらうと、その地区に「引き受けた印」（人型コマ）を1つ渡します。<br>
+   <button class="small" id="cCancel" style="margin-top:6px">やめる（行動を使わない）</button></p>`);
+  document.getElementById('cOwn').onclick=()=>{finishDecon('own');render();};
+  document.getElementById('cSite').onclick=()=>{finishDecon('site');render();};
+  document.getElementById('cCancel').onclick=()=>{S.choose=null;render();};
+  modalRoot.querySelectorAll('[data-reqto]').forEach(b=>b.onclick=()=>request(+b.dataset.reqto));
 }
 function renderP1(){
   const E=P1EVENTS[S.round];
@@ -491,8 +513,9 @@ function renderP1(){
   }else if(S.step==='turn'){
     const d=S.regions[S.actor];
     panel=`<div class="panel"><div class="row"><strong style="font-size:18px">${d.name}の区長の手番</strong>
-     <span>残りの行動 <b>${d.actions}</b>　人手 ${d.hands}</span>
-     ${d.human?`<button id="hand" ${d.hands<1?'disabled':''}>人手を使う（行動＋1）</button><button class="primary" id="end" style="margin-left:auto">手番を終える</button>`:'<span style="margin-left:auto">CPUが考えています…</span>'}</div>
+     <span>残りの行動 <b>${d.actions}</b> / ${ACTIONS_PER_ROUND}</span>
+     ${d.human?`<button class="primary" id="end" style="margin-left:auto">手番を終える</button>`:'<span style="margin-left:auto">CPUが考えています…</span>'}</div>
+     <p class="turncard">行動を2回：<b>除染する</b>（場所を選び、土の置き場を選ぶ）か、<b>仮置場をつくる</b>（自分の地区の現場保管が入る分だけ移る）。他の区長との相談は、いつでも。</p>
      ${goalsHtml()}<div class="status">${esc(flashMsg)}</div></div>`;
   }else if(S.step==='roundEnd'){
     panel=`<div class="panel"><h3 style="margin-top:0">R${S.round}の終わり</h3>${goalsHtml()}<div style="margin-top:12px"><button class="primary" id="next">次のラウンドへ</button></div></div>`;
@@ -502,19 +525,18 @@ function renderP1(){
   const q=id=>document.getElementById(id);
   if(q('go'))q('go').onclick=beginTurns;
   if(q('end'))q('end').onclick=endTurn;
-  if(q('hand'))q('hand').onclick=()=>{useHand(S.actor);render();};
   if(q('next'))q('next').onclick=startRound;
-  app.querySelectorAll('[data-decon]').forEach(b=>b.onclick=()=>{decon(S.actor,b.dataset.decon);render();});
+  app.querySelectorAll('[data-decon]').forEach(b=>b.onclick=()=>{startDecon(S.actor,b.dataset.decon);render();});
   app.querySelectorAll('[data-flip]').forEach(b=>b.onclick=()=>{flip(S.actor,b.dataset.flip);render();});
-  app.querySelectorAll('[data-carry]').forEach(b=>b.onclick=()=>{carryOwn(S.actor,b.dataset.carry);render();});
-  app.querySelectorAll('[data-ask]').forEach(b=>b.onclick=()=>request(S.actor,+b.dataset.to,b.dataset.ask));
   if(S.pending&&S.regions[S.pending.to].human){
     const p=S.pending,F=S.regions[p.from],T=S.regions[p.to],s=F.sites.find(x=>x.id===p.sid);
-    modal(`<h2>${T.name}の区長へ</h2><p>${F.name}から、<b>${TYPES[s.type].name}の土${p.n}</b>を、${T.name}の仮置場に置かせてほしいと頼まれています。引き受けると、お礼に<b>人手を1つ</b>受け取ります。</p>
-     <p>仮置場の空きは ${ownFree(T)}→${ownFree(T)-p.n}。よその地区の土を引き受けた量は ${T.received}→${T.received+p.n}（3以上になると、フェーズ2で住民1人が反対側へ）。</p>
+    modal(`<h2>${T.name}の区長へ</h2><p>${F.name}から、<b>${TYPES[s.type].name}の土${p.n}</b>を、${T.name}の仮置場に置かせてほしいと頼まれています。引き受けると、「引き受けた印」（人型コマ）を1つ受け取ります。</p>
+     <p>仮置場の空きは ${ownFree(T)}→${ownFree(T)-p.n}。引き受けた印は ${T.hands}→${T.hands+1}（2つ以上になると、フェーズ2で住民1人が反対側へ）。</p>
      <div class="row"><button class="primary" id="yes">引き受ける</button><button id="no">断る</button></div>`);
     document.getElementById('yes').onclick=()=>respond(true);
     document.getElementById('no').onclick=()=>respond(false);
+  }else if(S.choose&&S.regions[S.choose.i].human&&!S.pending){
+    chooseModal();
   }
 }
 function renderP1End(){
@@ -523,8 +545,8 @@ function renderP1End(){
    <h2>町じゅうの仮置場が、いっぱいになった</h2>
    ${goalsHtml()}
    ${S.townMods.length?`<p class="note" style="margin-top:10px">町の目標に届かなかった：${S.townMods.map(m=>esc(m.t)).join('／')}。フェーズ2の説明会で、全地区の出目が下がります。</p>`:'<p style="margin-top:10px">町の目標には届きました。</p>'}
-   <table><tr><th></th><th>除染</th><th>負担のある土地を仮置場に</th><th>よその土を引き受けた</th><th>現場保管</th><th>フェーズ2の住民</th></tr>
-   ${S.regions.map(d=>`<tr><th>${d.name}</th><td>${d.sites.filter(s=>s.done).length}/${d.sites.length}</td><td>${d.flipped}</td><td>${d.received}</td><td>${onsiteSites(d)}か所</td><td>反対${count(d,-1)}・条件次第${count(d,0)}・賛成${count(d,1)}</td></tr>`).join('')}</table>
+   <table><tr><th></th><th>除染</th><th>負担のある土地を仮置場に</th><th>引き受けた印</th><th>現場保管</th><th>フェーズ2の住民</th></tr>
+   ${S.regions.map(d=>`<tr><th>${d.name}</th><td>${d.sites.filter(s=>s.done).length}/${d.sites.length}</td><td>${d.flipped}</td><td>${d.hands}</td><td>${onsiteSites(d)}か所</td><td>反対${count(d,-1)}・条件次第${count(d,0)}・賛成${count(d,1)}</td></tr>`).join('')}</table>
    <ul style="font-size:13px;line-height:1.8">${S.regions.flatMap(d=>d.startNotes.map(n=>`<li>${d.name}：${esc(n)}</li>`)).join('')||'<li>住民の気持ちは、まだ動いていない</li>'}</ul>
    <p style="margin-top:16px">仮置場は「仮」の場所です。土を長く、まとめて保管する施設――<b>中間貯蔵施設</b>が要る。3人の区長が集まり、<b>町のどの地区に建てるか</b>の検討が始まります。</p>
    <button class="primary" id="go">建設の検討へ</button></div>`;
