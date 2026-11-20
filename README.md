@@ -5,6 +5,7 @@
 - 遊ぶ：`oriai-v2.1-testplay.html` をブラウザで開く（GitHub Pages のURLからも遊べます）。前の版は `oriai-v2.0-testplay.html`
 - 説明動画：`video/oriai-v2.0-explainer.mp4`（約3分・v2.0の流れ）
 - フェーズ1のルール案：`docs/phase1-rules-draft.md`
+- フェーズ2の話し合いの支え（ルール案）：`docs/phase2-rules-draft.md`
 
 ## ゲームの流れ
 
@@ -23,6 +24,7 @@
 | `oriai-v2.1-testplay.html` | ゲーム本体（1ファイルで完結） |
 | `oriai-v2.0-testplay.html` | 前の版（フェーズ1が3地域の受け渡し） |
 | `docs/phase1-rules-draft.md` | フェーズ1（半協力型・3地区）のルール案と史実との対応 |
+| `docs/phase2-rules-draft.md` | フェーズ2の話し合いの支え（地区の事情カード・質問カード・問い）のルール案 |
 | `sim/phase1_sim.py` | フェーズ1の数値を確かめる簡易シミュレーション |
 | `video/oriai-v2.0-explainer.mp4` | 説明動画 |
 | `video/oriai-v2.0-explainer.html` | 説明動画の映像（時刻を指定して描くアニメーション） |
